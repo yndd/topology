@@ -1,0 +1,20 @@
+apiVersion: topo.nddr.yndd.io/v1alpha1
+kind: TopologyLink
+metadata:
+  name: fabric1.link50-leaf1-leaf2
+  namespace: nokia-region1
+spec:
+  link:
+    tag:
+    - {key: lag-member, value: "true"}
+    endpoints:
+    - node-name: leaf1
+      interface-name: int-1/1/50
+      tag:
+      - {key: kind, value: infra}
+      - {key: lag-name, value: lag-50}
+    - node-name: leaf2
+      interface-name: int-1/1/50
+      tag:
+      - {key: kind, value: infra}
+      - {key: lag-name, value: lag-50}

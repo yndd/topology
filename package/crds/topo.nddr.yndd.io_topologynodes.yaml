@@ -1,0 +1,199 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: topologynodes.topo.nddr.yndd.io
+spec:
+  group: topo.nddr.yndd.io
+  names:
+    kind: TopologyNode
+    listKind: TopologyNodeList
+    plural: topologynodes
+    singular: topologynode
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.kind=='Synced')].status
+      name: SYNC
+      type: string
+    - jsonPath: .status.conditions[?(@.kind=='Ready')].status
+      name: STATUS
+      type: string
+    - jsonPath: .status.organization-name
+      name: ORG
+      type: string
+    - jsonPath: .status.deployment-name
+      name: DEPL
+      type: string
+    - jsonPath: .status.topology-name
+      name: TOPO
+      type: string
+    - jsonPath: .spec.node.kind-name
+      name: KIND
+      type: string
+    - jsonPath: .status.node.state.tag[?(@.key=='platform')].value
+      name: PLATFORM
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: TopoTopologyNode is the Schema for the TopologyNode API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A TopologyNodeSpec defines the desired state of a TopologyNode.
+            properties:
+              node:
+                description: nddv1.ResourceSpec `json:",inline"`
+                properties:
+                  admin-state:
+                    default: enable
+                    enum:
+                    - disable
+                    - enable
+                    type: string
+                  description:
+                    description: kubebuilder:validation:MinLength=1 kubebuilder:validation:MaxLength=255
+                    pattern: '[A-Za-z0-9 !@#$^&()|+=`~.,''/_:;?-]*'
+                    type: string
+                  kind-name:
+                    type: string
+                  name:
+                    type: string
+                  tag:
+                    items:
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                type: object
+            type: object
+          status:
+            description: A TopologyNodeStatus represents the observed state of a TopologyNode.
+            properties:
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource
+                  properties:
+                    kind:
+                      description: Type of this condition. At most one of each condition
+                        type may apply to a resource at any point in time.
+                      type: string
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time this condition
+                        transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A Message containing details about this condition's
+                        last transition from one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                  required:
+                  - kind
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  type: object
+                type: array
+              deployment-name:
+                type: string
+              node:
+                description: NddrTopologyTopologyNode struct
+                properties:
+                  admin-state:
+                    type: string
+                  description:
+                    type: string
+                  kind-name:
+                    type: string
+                  name:
+                    type: string
+                  state:
+                    description: NddrTopologyTopologyNodeState struct
+                    properties:
+                      endpoint:
+                        items:
+                          description: NddrTopologyTopologyNodeStateEndpoint struct
+                          properties:
+                            lag:
+                              type: boolean
+                            lag-sub-link:
+                              type: boolean
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                      last-update:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      tag:
+                        items:
+                          properties:
+                            key:
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  tag:
+                    items:
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              organization-name:
+                type: string
+              topology-name:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

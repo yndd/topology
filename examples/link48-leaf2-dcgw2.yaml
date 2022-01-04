@@ -1,0 +1,18 @@
+apiVersion: topo.nddr.yndd.io/v1alpha1
+kind: TopologyLink
+metadata:
+  name: fabric1.link48-leaf2-dcgw2
+  namespace: nokia-region1
+spec:
+  link:
+    tag:
+    endpoints:
+    - node-name: leaf2
+      interface-name: int-1/1/48
+      tag:
+      - {key: kind, value: access}
+      - {key: endpoint-group, value: dcgw}
+    - node-name: dcgw2
+      interface-name: int-1/1/1
+      tag:
+      - {key: kind, value: access}

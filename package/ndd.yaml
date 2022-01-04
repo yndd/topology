@@ -1,0 +1,8 @@
+
+apiVersion: meta.pkg.ndd.yndd.io/v1
+kind: Intent
+metadata:
+  name: nddr-topo-registry
+spec:
+  controller:
+    image: yndd/nddr-topo-registry-controller:latest

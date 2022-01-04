@@ -1,0 +1,24 @@
+apiVersion: topo.nddr.yndd.io/v1alpha1
+kind: TopologyLink
+metadata:
+  name: fabric1.link1-leaf2-master0
+  namespace: nokia-region1
+spec:
+  link:
+    tag:
+    - {key: lag-member, value: "true"}
+    endpoints:
+    - node-name: leaf2
+      interface-name: int-1/1/1
+      tag:
+      - {key: kind, value: access}
+      - {key: lag-name, value: lag-1}
+      - {key: lacp-fallback, value: "true"}
+      - {key: endpoint-group, value: server-pod1}
+      - {key: multihoming, value: "true"}
+      - {key: multihoming-name, value: esi1}
+    - node-name: master0
+      interface-name: ens0
+      tag:
+      - {key: kind, value: access}
+      - {key: lag-name, value: bond0}

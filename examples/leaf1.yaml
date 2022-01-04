@@ -1,0 +1,11 @@
+apiVersion: topo.nddr.yndd.io/v1alpha1
+kind: TopologyNode
+metadata:
+  name: fabric1.leaf1
+  namespace: nokia-region1
+spec:
+  node:
+    kind-name: srl
+    tag:
+    - {key: index, value: "0"}
+    - {key: position, value: leaf}
