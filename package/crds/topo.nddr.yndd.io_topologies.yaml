@@ -23,11 +23,14 @@ spec:
     - jsonPath: .status.conditions[?(@.kind=='Ready')].status
       name: STATUS
       type: string
-    - jsonPath: .status.organization-name
+    - jsonPath: .status.oda[?(@.key=='organization')].value
       name: ORG
       type: string
-    - jsonPath: .status.deployment-name
-      name: DEPL
+    - jsonPath: .status.oda[?(@.key=='deployment')].value
+      name: DEP
+      type: string
+    - jsonPath: .status.oda[?(@.key=='availability-zone')].value
+      name: AZ
       type: string
     - jsonPath: .status.topology-name
       name: TOPO
@@ -55,8 +58,17 @@ spec:
           spec:
             description: A TopologySpec defines the desired state of a Topology.
             properties:
+              oda:
+                items:
+                  properties:
+                    key:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               topology:
-                description: nddv1.ResourceSpec `json:",inline"`
+                description: Topology struct
                 properties:
                   admin-state:
                     default: enable
@@ -140,10 +152,15 @@ spec:
                   - status
                   type: object
                 type: array
-              deployment-name:
-                type: string
-              organization-name:
-                type: string
+              oda:
+                items:
+                  properties:
+                    key:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               topology:
                 description: NddrTopologyTopology struct
                 properties:

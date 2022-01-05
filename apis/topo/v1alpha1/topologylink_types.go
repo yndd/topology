@@ -53,15 +53,15 @@ type TopoTopologyLinkEndpoints struct {
 
 // A TopologyLinkSpec defines the desired state of a TopologyLink.
 type TopologyLinkSpec struct {
-	//nddv1.ResourceSpec `json:",inline"`
-	TopologyLink *TopoTopologyLink `json:"link,omitempty"`
+	nddov1.OdaInfo `json:",inline"`
+	TopologyName   *string           `json:"topology-name"`
+	TopologyLink   *TopoTopologyLink `json:"link,omitempty"`
 }
 
 // A TopologyLinkStatus represents the observed state of a TopologyLink.
 type TopologyLinkStatus struct {
 	nddv1.ConditionedStatus `json:",inline"`
-	OrganizationName        *string                   `json:"organization-name,omitempty"`
-	DeploymentName          *string                   `json:"deployment-name,omitempty"`
+	nddov1.OdaInfo          `json:",inline"`
 	TopologyName            *string                   `json:"topology-name,omitempty"`
 	TopologyLink            *NddrTopologyTopologyLink `json:"link,omitempty"`
 }
@@ -72,8 +72,9 @@ type TopologyLinkStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
-// +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.organization-name"
-// +kubebuilder:printcolumn:name="DEPL",type="string",JSONPath=".status.deployment-name"
+// +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.oda[?(@.key=='organization')].value"
+// +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda[?(@.key=='deployment')].value"
+// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availability-zone')].value"
 // +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
 // +kubebuilder:printcolumn:name="LAG",type="string",JSONPath=".spec.link.tag[?(@.key=='lag')].value"
 // +kubebuilder:printcolumn:name="MEMBER",type="string",JSONPath=".spec.link.tag[?(@.key=='lag-member')].value"

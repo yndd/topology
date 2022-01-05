@@ -22,7 +22,6 @@ import (
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	"github.com/yndd/ndd-runtime/pkg/utils"
-	"github.com/yndd/nddo-runtime/pkg/odr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -51,8 +50,11 @@ type Tp interface {
 	resource.Object
 	resource.Conditioned
 
-	GetOrganizationName() string
-	GetDeploymentName() string
+	GetCondition(ct nddv1.ConditionKind) nddv1.Condition
+	SetConditions(c ...nddv1.Condition)
+	GetOrganization() string
+	GetDeployment() string
+	GetAvailabilityZone() string
 	GetTopologyName() string
 	GetAdminState() string
 	GetDescription() string
@@ -67,8 +69,9 @@ type Tp interface {
 	SetStatus(string)
 	SetReason(string)
 	GetStatus() string
-	SetOrganizationName(string)
-	SetDeploymentName(string)
+	SetOrganization(s string)
+	SetDeployment(s string)
+	SetAvailabilityZone(s string)
 	SetTopologyName(string)
 }
 
@@ -82,12 +85,16 @@ func (x *Topology) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
 }
 
-func (x *Topology) GetOrganizationName() string {
-	return odr.GetOrganizationName(x.GetNamespace())
+func (x *Topology) GetOrganization() string {
+	return x.Spec.GetOrganization()
 }
 
-func (x *Topology) GetDeploymentName() string {
-	return odr.GetDeploymentName(x.GetNamespace())
+func (x *Topology) GetDeployment() string {
+	return x.Spec.GetDeployment()
+}
+
+func (x *Topology) GetAvailabilityZone() string {
+	return x.Spec.GetAvailabilityZone()
 }
 
 func (x *Topology) GetTopologyName() string {
@@ -211,12 +218,16 @@ func (x *Topology) GetStatus() string {
 	return "unknown"
 }
 
-func (x *Topology) SetOrganizationName(s string) {
-	x.Status.OrganizationName = &s
+func (x *Topology) SetOrganization(s string) {
+	x.Status.SetOrganization(s)
 }
 
-func (x *Topology) SetDeploymentName(s string) {
-	x.Status.DeploymentName = &s
+func (x *Topology) SetDeployment(s string) {
+	x.Status.SetDeployment(s)
+}
+
+func (x *Topology) SetAvailabilityZone(s string) {
+	x.Status.SetAvailabilityZone(s)
 }
 
 func (x *Topology) SetTopologyName(s string) {

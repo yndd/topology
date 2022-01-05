@@ -279,8 +279,9 @@ func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, topolog
 	if cr.GetLag() {
 		// this is a logical link (single homes or multihomed), we dont need to process it since the member links take care
 		// of crud operation
-		cr.SetOrganizationName(cr.GetOrganizationName())
-		cr.SetDeploymentName(cr.GetDeploymentName())
+		cr.SetOrganization(cr.GetOrganization())
+		cr.SetDeployment(cr.GetDeployment())
+		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 		cr.SetTopologyName(cr.GetTopologyName())
 		return nil, nil
 	}
@@ -296,8 +297,9 @@ func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, topolog
 				return nil, err
 			}
 			r.log.Debug("logical link created")
-			cr.SetOrganizationName(cr.GetOrganizationName())
-			cr.SetDeploymentName(cr.GetDeploymentName())
+			cr.SetOrganization(cr.GetOrganization())
+			cr.SetDeployment(cr.GetDeployment())
+			cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 			cr.SetTopologyName(cr.GetTopologyName())
 			return nil, nil
 
@@ -311,8 +313,9 @@ func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, topolog
 		}
 
 	}
-	cr.SetOrganizationName(cr.GetOrganizationName())
-	cr.SetDeploymentName(cr.GetDeploymentName())
+	cr.SetOrganization(cr.GetOrganization())
+	cr.SetDeployment(cr.GetDeployment())
+	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 	cr.SetTopologyName(cr.GetTopologyName())
 	return nil, nil
 }
@@ -349,7 +352,7 @@ func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, top
 						node := &topov1alpha1.TopologyNode{}
 						if err := r.client.Get(ctx, types.NamespacedName{
 							Namespace: cr.GetNamespace(),
-							Name:      strings.Join([]string{topologyName, nodeName}, ".")}, node); err != nil {
+							Name:      nodeName}, node); err != nil {
 							if resource.IgnoreNotFound(err) != nil {
 								return nil, err
 							}
@@ -375,7 +378,7 @@ func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, top
 				node := &topov1alpha1.TopologyNode{}
 				if err := r.client.Get(ctx, types.NamespacedName{
 					Namespace: cr.GetNamespace(),
-					Name:      strings.Join([]string{topologyName, nodeName}, ".")}, node); err != nil {
+					Name:      nodeName}, node); err != nil {
 					if resource.IgnoreNotFound(err) != nil {
 						return nil, err
 					}
@@ -393,7 +396,7 @@ func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, top
 			node := &topov1alpha1.TopologyNode{}
 			if err := r.client.Get(ctx, types.NamespacedName{
 				Namespace: cr.GetNamespace(),
-				Name:      strings.Join([]string{topologyName, nodeName}, ".")}, node); err != nil {
+				Name:      nodeName}, node); err != nil {
 				r.log.Debug("individual link: node not found", "nodeName", nodeName)
 				cr.SetStatus("down")
 				cr.SetReason(fmt.Sprintf("node %d not found", i))

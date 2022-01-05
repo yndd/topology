@@ -81,7 +81,7 @@ func (e *EnqueueRequestForAllTopologies) add(obj runtime.Object, queue adder) {
 
 	for _, topolink := range d.GetLinks() {
 		// only enqueue if the topology name match
-		if topolink.GetTopologyName() == dd.GetName() {
+		if topolink.GetTopologyName() == dd.GetTopologyName() {
 
 			crName := getCrName(topolink)
 			e.handler.ResetSpeedy(crName)

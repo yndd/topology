@@ -24,7 +24,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddo-runtime/pkg/odr"
 	"github.com/yndd/nddo-runtime/pkg/reconciler/managed"
 	"github.com/yndd/nddo-runtime/pkg/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -160,13 +159,11 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tp) (m
 	crName := getCrName(cr)
 	r.handler.Init(crName)
 
-	deploymentName := odr.GetDeploymentName(cr.GetNamespace())
-
 	// get the deployment
 	dep := r.newDeployment()
 	if err := r.client.Get(ctx, types.NamespacedName{
-		Namespace: odr.GetOrganizationName(cr.GetNamespace()),
-		Name:      deploymentName}, dep); err != nil {
+		Namespace: cr.GetNamespace(),
+		Name:      cr.GetDeployment()}, dep); err != nil {
 		// can happen when the deployment is not found
 		cr.SetStatus("down")
 		cr.SetReason("organization/deployment not found")
@@ -181,14 +178,16 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tp) (m
 	if cr.GetAdminState() == "disable" {
 		cr.SetStatus("down")
 		cr.SetReason("admin disable")
-		cr.SetOrganizationName(cr.GetOrganizationName())
-		cr.SetDeploymentName(cr.GetDeploymentName())
+		cr.SetOrganization(cr.GetOrganization())
+		cr.SetDeployment(cr.GetDeployment())
+		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 		cr.SetTopologyName(cr.GetTopologyName())
 	} else {
 		cr.SetStatus("up")
 		cr.SetReason("")
-		cr.SetOrganizationName(cr.GetOrganizationName())
-		cr.SetDeploymentName(cr.GetDeploymentName())
+		cr.SetOrganization(cr.GetOrganization())
+		cr.SetDeployment(cr.GetDeployment())
+		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 		cr.SetTopologyName(cr.GetTopologyName())
 	}
 	return make(map[string]string), nil

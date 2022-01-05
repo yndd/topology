@@ -1,9 +1,15 @@
 apiVersion: topo.nddr.yndd.io/v1alpha1
 kind: TopologyLink
 metadata:
-  name: fabric1.link48-leaf2-dcgw2
-  namespace: nokia-region1
+  name: link48-leaf2-dcgw2
+  namespace: default
 spec:
+  oda:
+  - key: organization
+    value: nokia
+  - key: deployment
+    value: region1
+  topology-name: fabric1
   link:
     tag:
     endpoints:

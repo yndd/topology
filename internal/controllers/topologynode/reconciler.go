@@ -203,8 +203,9 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 		return nil, err
 	}
 
-	cr.SetOrganizationName(cr.GetOrganizationName())
-	cr.SetDeploymentName(cr.GetDeploymentName())
+	cr.SetOrganization(cr.GetOrganization())
+	cr.SetDeployment(cr.GetDeployment())
+	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 	cr.SetTopologyName(cr.GetTopologyName())
 
 	return make(map[string]string), nil

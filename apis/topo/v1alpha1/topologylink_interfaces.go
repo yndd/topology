@@ -18,13 +18,11 @@ package v1alpha1
 
 import (
 	"reflect"
-	"strings"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	"github.com/yndd/ndd-runtime/pkg/utils"
 	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
-	"github.com/yndd/nddo-runtime/pkg/odr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -53,8 +51,11 @@ type Tl interface {
 	resource.Object
 	resource.Conditioned
 
-	GetOrganizationName() string
-	GetDeploymentName() string
+	GetCondition(ct nddv1.ConditionKind) nddv1.Condition
+	SetConditions(c ...nddv1.Condition)
+	GetOrganization() string
+	GetDeployment() string
+	GetAvailabilityZone() string
 	GetTopologyName() string
 	GetLinkName() string
 	GetAdminState() string
@@ -99,8 +100,9 @@ type Tl interface {
 	DeleteEndPointATag(key string, value string)
 	DeleteEndPointBTag(key string, value string)
 
-	SetOrganizationName(string)
-	SetDeploymentName(string)
+	SetOrganization(s string)
+	SetDeployment(s string)
+	SetAvailabilityZone(s string)
 	SetTopologyName(string)
 }
 
@@ -114,28 +116,27 @@ func (x *TopologyLink) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
 }
 
-func (x *TopologyLink) GetOrganizationName() string {
-	return odr.GetOrganizationName(x.GetNamespace())
+func (x *TopologyLink) GetOrganization() string {
+	return x.Spec.GetOrganization()
 }
 
-func (x *TopologyLink) GetDeploymentName() string {
-	return odr.GetDeploymentName(x.GetNamespace())
+func (x *TopologyLink) GetDeployment() string {
+	return x.Spec.GetDeployment()
+}
+
+func (x *TopologyLink) GetAvailabilityZone() string {
+	return x.Spec.GetAvailabilityZone()
 }
 
 func (x *TopologyLink) GetTopologyName() string {
-	split := strings.Split(x.GetName(), ".")
-	if len(split) > 1 {
-		return split[0]
+	if reflect.ValueOf(x.Spec.TopologyName).IsZero() {
+		return ""
 	}
-	return ""
+	return *x.Spec.TopologyName
 }
 
 func (x *TopologyLink) GetLinkName() string {
-	split := strings.Split(x.GetName(), ".")
-	if len(split) > 1 {
-		return split[1]
-	}
-	return ""
+	return x.GetName()
 }
 
 func (x *TopologyLink) GetAdminState() string {
@@ -544,12 +545,16 @@ func (x *TopologyLink) DeleteEndPointBTag(key string, value string) {
 	}
 }
 
-func (x *TopologyLink) SetOrganizationName(s string) {
-	x.Status.OrganizationName = &s
+func (x *TopologyLink) SetOrganization(s string) {
+	x.Status.SetOrganization(s)
 }
 
-func (x *TopologyLink) SetDeploymentName(s string) {
-	x.Status.DeploymentName = &s
+func (x *TopologyLink) SetDeployment(s string) {
+	x.Status.SetDeployment(s)
+}
+
+func (x *TopologyLink) SetAvailabilityZone(s string) {
+	x.Status.SetAvailabilityZone(s)
 }
 
 func (x *TopologyLink) SetTopologyName(s string) {

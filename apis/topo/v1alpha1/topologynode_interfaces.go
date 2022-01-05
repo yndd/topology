@@ -19,13 +19,11 @@ package v1alpha1
 import (
 	"reflect"
 	"strconv"
-	"strings"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	"github.com/yndd/ndd-runtime/pkg/utils"
 	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
-	"github.com/yndd/nddo-runtime/pkg/odr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,8 +52,11 @@ type Tn interface {
 	resource.Object
 	resource.Conditioned
 
-	GetOrganizationName() string
-	GetDeploymentName() string
+	GetCondition(ct nddv1.ConditionKind) nddv1.Condition
+	SetConditions(c ...nddv1.Condition)
+	GetOrganization() string
+	GetDeployment() string
+	GetAvailabilityZone() string
 	GetTopologyName() string
 	GetNodeName() string
 	GetKindName() string
@@ -74,8 +75,9 @@ type Tn interface {
 	SetPosition(string)
 	SetNodeEndpoint(ep *NddrTopologyTopologyLinkStateNodeEndpoint)
 	GetNodeEndpoints() []*NddrTopologyTopologyNodeStateEndpoint
-	SetOrganizationName(string)
-	SetDeploymentName(string)
+	SetOrganization(s string)
+	SetDeployment(s string)
+	SetAvailabilityZone(s string)
 	SetTopologyName(string)
 }
 
@@ -89,28 +91,27 @@ func (x *TopologyNode) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
 }
 
-func (x *TopologyNode) GetOrganizationName() string {
-	return odr.GetOrganizationName(x.GetNamespace())
+func (x *TopologyNode) GetOrganization() string {
+	return x.Spec.GetOrganization()
 }
 
-func (x *TopologyNode) GetDeploymentName() string {
-	return odr.GetDeploymentName(x.GetNamespace())
+func (x *TopologyNode) GetDeployment() string {
+	return x.Spec.GetDeployment()
+}
+
+func (x *TopologyNode) GetAvailabilityZone() string {
+	return x.Spec.GetAvailabilityZone()
 }
 
 func (x *TopologyNode) GetTopologyName() string {
-	split := strings.Split(x.GetName(), ".")
-	if len(split) > 1 {
-		return split[0]
+	if reflect.ValueOf(x.Spec.TopologyName).IsZero() {
+		return ""
 	}
-	return ""
+	return *x.Spec.TopologyName
 }
 
 func (x *TopologyNode) GetNodeName() string {
-	split := strings.Split(x.GetName(), ".")
-	if len(split) > 1 {
-		return split[1]
-	}
-	return ""
+	return x.GetName()
 }
 
 func (x *TopologyNode) GetKindName() string {
@@ -285,12 +286,16 @@ func (x *TopologyNode) GetNodeEndpoints() []*NddrTopologyTopologyNodeStateEndpoi
 	return make([]*NddrTopologyTopologyNodeStateEndpoint, 0)
 }
 
-func (x *TopologyNode) SetOrganizationName(s string) {
-	x.Status.OrganizationName = &s
+func (x *TopologyNode) SetOrganization(s string) {
+	x.Status.SetOrganization(s)
 }
 
-func (x *TopologyNode) SetDeploymentName(s string) {
-	x.Status.DeploymentName = &s
+func (x *TopologyNode) SetDeployment(s string) {
+	x.Status.SetDeployment(s)
+}
+
+func (x *TopologyNode) SetAvailabilityZone(s string) {
+	x.Status.SetAvailabilityZone(s)
 }
 
 func (x *TopologyNode) SetTopologyName(s string) {

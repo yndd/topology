@@ -23,11 +23,14 @@ spec:
     - jsonPath: .status.conditions[?(@.kind=='Ready')].status
       name: STATUS
       type: string
-    - jsonPath: .status.organization-name
+    - jsonPath: .status.oda[?(@.key=='organization')].value
       name: ORG
       type: string
-    - jsonPath: .status.deployment-name
-      name: DEPL
+    - jsonPath: .status.oda[?(@.key=='deployment')].value
+      name: DEP
+      type: string
+    - jsonPath: .status.oda[?(@.key=='availability-zone')].value
+      name: AZ
       type: string
     - jsonPath: .status.topology-name
       name: TOPO
@@ -80,7 +83,7 @@ spec:
             description: A TopologyLinkSpec defines the desired state of a TopologyLink.
             properties:
               link:
-                description: nddv1.ResourceSpec `json:",inline"`
+                description: TopoTopologyLink struct
                 properties:
                   admin-state:
                     default: enable
@@ -128,6 +131,19 @@ spec:
                       type: object
                     type: array
                 type: object
+              oda:
+                items:
+                  properties:
+                    key:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
+              topology-name:
+                type: string
+            required:
+            - topology-name
             type: object
           status:
             description: A TopologyLinkStatus represents the observed state of a TopologyLink.
@@ -165,8 +181,6 @@ spec:
                   - status
                   type: object
                 type: array
-              deployment-name:
-                type: string
               link:
                 description: NddrTopologyTopologyLink struct
                 properties:
@@ -246,8 +260,15 @@ spec:
                       type: object
                     type: array
                 type: object
-              organization-name:
-                type: string
+              oda:
+                items:
+                  properties:
+                    key:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               topology-name:
                 type: string
             type: object

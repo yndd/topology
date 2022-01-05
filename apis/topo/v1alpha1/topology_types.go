@@ -53,15 +53,14 @@ type TopoTopologyKind struct {
 
 // A TopologySpec defines the desired state of a Topology.
 type TopologySpec struct {
-	//nddv1.ResourceSpec `json:",inline"`
-	Topology *TopoTopology `json:"topology,omitempty"`
+	nddov1.OdaInfo `json:",inline"`
+	Topology       *TopoTopology `json:"topology,omitempty"`
 }
 
 // A TopologyStatus represents the observed state of a Topology.
 type TopologyStatus struct {
 	nddv1.ConditionedStatus `json:",inline"`
-	OrganizationName        *string               `json:"organization-name,omitempty"`
-	DeploymentName          *string               `json:"deployment-name,omitempty"`
+	nddov1.OdaInfo          `json:",inline"`
 	TopologyName            *string               `json:"topology-name,omitempty"`
 	Topology                *NddrTopologyTopology `json:"topology,omitempty"`
 }
@@ -72,8 +71,9 @@ type TopologyStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
-// +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.organization-name"
-// +kubebuilder:printcolumn:name="DEPL",type="string",JSONPath=".status.deployment-name"
+// +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.oda[?(@.key=='organization')].value"
+// +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda[?(@.key=='deployment')].value"
+// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availability-zone')].value"
 // +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 type Topology struct {

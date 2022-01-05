@@ -88,9 +88,9 @@ func buildLogicalTopologyLink(cr topov1alpha1.Tl, topologyName string) *topov1al
 			epBTags = cr.GetEndpointBTagRaw()
 		}
 		// prepend the topologyname
-		name = strings.Join([]string{topologyName, name}, ".")
+		//name = strings.Join([]string{topologyName, name}, ".")
 	} else {
-		name = strings.Join([]string{topologyName, shPrefix, cr.GetEndpointANodeName(), cr.GetLagAName(), cr.GetEndpointBNodeName(), cr.GetLagBName()}, ".")
+		name = strings.Join([]string{shPrefix, cr.GetEndpointANodeName(), cr.GetLagAName(), cr.GetEndpointBNodeName(), cr.GetLagBName()}, ".")
 		nodeNameA = cr.GetEndpointANodeName()
 		interfaceNameA = cr.GetLagAName()
 		epATags = cr.GetEndpointATagRaw()
@@ -99,15 +99,21 @@ func buildLogicalTopologyLink(cr topov1alpha1.Tl, topologyName string) *topov1al
 		epBTags = cr.GetEndpointBTagRaw()
 	}
 
+	ndda := nddov1.NewOdaInfo()
+	ndda.SetOrganization(cr.GetOrganization())
+	ndda.SetDeployment(cr.GetDeployment())
+	ndda.SetAvailabilityZone(cr.GetAvailabilityZone())
+
 	//fmt.Printf("buildLogicalTopologyLink: name: %s nodeA: %s, nodeB: %s, itfcA: %s, itfceB: %s\n", name, nodeNameA, nodeNameB, interfaceNameA, interfaceNameB)
 	//fmt.Printf("buildLogicalTopologyLink: epAtags: %v, epBtags: %v\n", cr.GetEndpointATag(), cr.GetEndpointBTag())
-	return &topov1alpha1.TopologyLink{
+	l := &topov1alpha1.TopologyLink{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
 			Namespace:       cr.GetNamespace(),
 			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.TopologyLinkGroupVersionKind))},
 		},
 		Spec: topov1alpha1.TopologyLinkSpec{
+			TopologyName: utils.StringPtr(topologyName),
 			TopologyLink: &topov1alpha1.TopoTopologyLink{
 				AdminState: utils.StringPtr("enable"),
 				Endpoints: []*topov1alpha1.TopoTopologyLinkEndpoints{
@@ -133,6 +139,8 @@ func buildLogicalTopologyLink(cr topov1alpha1.Tl, topologyName string) *topov1al
 			},
 		},
 	}
+	l.Spec.Oda = ndda.Oda
+	return l
 }
 
 func updateLogicalTopologyLink(cr topov1alpha1.Tl, mhtl *topov1alpha1.TopologyLink) *topov1alpha1.TopologyLink {
