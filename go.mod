@@ -7,8 +7,8 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/yndd/ndd-core v0.1.6
 	github.com/yndd/ndd-runtime v0.1.6
-	github.com/yndd/nddo-runtime v0.0.47
-	github.com/yndd/nddr-org-registry v0.0.1
+	github.com/yndd/nddo-runtime v0.0.53
+	github.com/yndd/nddr-org-registry v0.0.8
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v0.22.2

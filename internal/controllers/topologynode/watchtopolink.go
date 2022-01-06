@@ -21,6 +21,7 @@ import (
 
 	//ndddvrv1 "github.com/yndd/ndd-core/apis/dvr/v1"
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	"github.com/yndd/nddo-runtime/pkg/odns"
 	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
 	"github.com/yndd/nddr-topo-registry/internal/handler"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -75,9 +76,13 @@ func (e *EnqueueRequestForAllTopologyLinks) add(obj runtime.Object, queue adder)
 		return
 	}
 
+	watchDnsName, _ := odns.Name2OdnsTopoResource(dd.GetName()).GetFullOdaName()
+
 	for _, toponode := range d.GetNodes() {
 		// only enqueue if the topology name match
-		if toponode.GetTopologyName() == dd.GetName() {
+		//if toponode.GetTopologyName() == dd.GetName() {
+		nodeDnsName, _ := odns.Name2OdnsTopo(toponode.GetName()).GetFullOdaName()
+		if nodeDnsName == watchDnsName {
 
 			crName := getCrName(toponode)
 			e.handler.ResetSpeedy(crName)

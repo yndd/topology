@@ -22,6 +22,7 @@ import (
 
 	//ndddvrv1 "github.com/yndd/ndd-core/apis/dvr/v1"
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	"github.com/yndd/nddo-runtime/pkg/odns"
 	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
 	"github.com/yndd/nddr-topo-registry/internal/handler"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -80,9 +81,13 @@ func (e *EnqueueRequestForAllTopologyLinks) delete(obj runtime.Object, queue add
 		return
 	}
 
+	watchDnsName, _ := odns.Name2OdnsTopoResource(dd.GetName()).GetFullOdaName()
+
 	for _, topolink := range d.GetLinks() {
 		// only enqueue if the topology name match
-		if topolink.GetTopologyName() == dd.GetTopologyName() {
+		//if topolink.GetTopologyName() == dd.GetTopologyName() {
+		linkDnsName, _ := odns.Name2OdnsTopo(topolink.GetName()).GetFullOdaName()
+		if linkDnsName == watchDnsName {
 			crName := getCrName(topolink)
 			e.handler.ResetSpeedy(crName)
 			// if a logical link gets deleted, we need to see if there are other member links, so we reconcile

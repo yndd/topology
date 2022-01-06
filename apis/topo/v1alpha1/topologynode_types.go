@@ -42,9 +42,9 @@ type TopoTopologyNode struct {
 
 // A TopologyNodeSpec defines the desired state of a TopologyNode.
 type TopologyNodeSpec struct {
-	nddov1.OdaInfo `json:",inline"`
-	TopologyName   *string          `json:"topology-name"`
-	TopologyNode   TopoTopologyNode `json:"node,omitempty"`
+	//nddov1.OdaInfo `json:",inline"`
+	//TopologyName   *string          `json:"topology-name"`
+	TopologyNode TopoTopologyNode `json:"node,omitempty"`
 }
 
 // A TopologyNodeStatus represents the observed state of a TopologyNode.

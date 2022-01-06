@@ -26,6 +26,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/utils"
+	"github.com/yndd/nddo-runtime/pkg/odns"
 	"github.com/yndd/nddo-runtime/pkg/reconciler/managed"
 	"github.com/yndd/nddo-runtime/pkg/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -209,12 +210,13 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tl) (m
 	crName := getCrName(cr)
 	r.handler.Init(crName)
 
-	// get the topo
-	topologyName := cr.GetTopologyName()
+	// get the topo name which is the full name w/o the link info
+	fullTopoName := odns.GetParentResourceName(cr.GetName())
+
 	topo := r.newTopology()
 	if err := r.client.Get(ctx, types.NamespacedName{
 		Namespace: cr.GetNamespace(),
-		Name:      topologyName}, topo); err != nil {
+		Name:      fullTopoName}, topo); err != nil {
 		// can happen when the resource is not found
 		cr.SetStatus("down")
 		cr.SetReason("topology not found")
@@ -228,11 +230,11 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tl) (m
 
 	// topology found and ready
 
-	if err := r.handleStatus(ctx, cr, topo, topologyName); err != nil {
+	if err := r.handleStatus(ctx, cr, topo); err != nil {
 		return nil, err
 	}
 
-	_, err := r.parseLink(ctx, cr, topologyName)
+	_, err := r.parseLink(ctx, cr, fullTopoName)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +242,7 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tl) (m
 	return make(map[string]string), nil
 }
 
-func (r *application) handleStatus(ctx context.Context, cr topov1alpha1.Tl, topo topov1alpha1.Tp, topologyName string) error {
+func (r *application) handleStatus(ctx context.Context, cr topov1alpha1.Tl, topo topov1alpha1.Tp) error {
 	// topology found
 
 	if topo.GetStatus() == "down" {
@@ -258,12 +260,12 @@ func (r *application) handleStatus(ctx context.Context, cr topov1alpha1.Tl, topo
 	return nil
 }
 
-func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, topologyName string) (*string, error) {
+func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, fullTopoName string) (*string, error) {
 	// parse link
 
 	// validates if the nodes if the links are present in the k8s api are not
 	// if an error occurs during validation an error is returned
-	msg, err := r.validateNodes(ctx, cr, topologyName)
+	msg, err := r.validateNodes(ctx, cr)
 	if err != nil {
 		return msg, err
 	}
@@ -288,12 +290,12 @@ func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, topolog
 
 	// check if the link is part of a lag
 	if cr.GetLagMember() {
-		logicalLink, err := r.hooks.Get(ctx, cr, topologyName)
+		logicalLink, err := r.hooks.Get(ctx, cr, fullTopoName)
 		if err != nil {
 			if resource.IgnoreNotFound(err) != nil {
 				return nil, err
 			}
-			if err := r.hooks.Create(ctx, cr, topologyName); err != nil {
+			if err := r.hooks.Create(ctx, cr, fullTopoName); err != nil {
 				return nil, err
 			}
 			r.log.Debug("logical link created")
@@ -320,7 +322,7 @@ func (r *application) parseLink(ctx context.Context, cr topov1alpha1.Tl, topolog
 	return nil, nil
 }
 
-func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, topologyName string) (*string, error) {
+func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl) (*string, error) {
 	for i := 0; i <= 1; i++ {
 		var multihoming bool
 		var nodeName string
@@ -349,10 +351,12 @@ func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, top
 				for k, v := range tags {
 					if strings.Contains(k, topov1alpha1.NodePrefix) {
 						nodeName := strings.TrimPrefix(k, topov1alpha1.NodePrefix+":")
+
+						fullNodeName := strings.Join([]string{odns.GetParentResourceName(cr.GetName()), nodeName}, ".")
 						node := &topov1alpha1.TopologyNode{}
 						if err := r.client.Get(ctx, types.NamespacedName{
 							Namespace: cr.GetNamespace(),
-							Name:      nodeName}, node); err != nil {
+							Name:      fullNodeName}, node); err != nil {
 							if resource.IgnoreNotFound(err) != nil {
 								return nil, err
 							}
@@ -375,10 +379,11 @@ func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, top
 					return nil, nil
 				}
 			} else {
+				fullNodeName := strings.Join([]string{odns.GetParentResourceName(cr.GetName()), nodeName}, ".")
 				node := &topov1alpha1.TopologyNode{}
 				if err := r.client.Get(ctx, types.NamespacedName{
 					Namespace: cr.GetNamespace(),
-					Name:      nodeName}, node); err != nil {
+					Name:      fullNodeName}, node); err != nil {
 					if resource.IgnoreNotFound(err) != nil {
 						return nil, err
 					}
@@ -393,10 +398,11 @@ func (r *application) validateNodes(ctx context.Context, cr topov1alpha1.Tl, top
 			}
 		} else {
 			// individual links
+			fullNodeName := strings.Join([]string{odns.GetParentResourceName(cr.GetName()), nodeName}, ".")
 			node := &topov1alpha1.TopologyNode{}
 			if err := r.client.Get(ctx, types.NamespacedName{
 				Namespace: cr.GetNamespace(),
-				Name:      nodeName}, node); err != nil {
+				Name:      fullNodeName}, node); err != nil {
 				r.log.Debug("individual link: node not found", "nodeName", nodeName)
 				cr.SetStatus("down")
 				cr.SetReason(fmt.Sprintf("node %d not found", i))

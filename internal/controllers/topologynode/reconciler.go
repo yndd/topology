@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	"github.com/yndd/nddo-runtime/pkg/odns"
 	"github.com/yndd/nddo-runtime/pkg/reconciler/managed"
 	"github.com/yndd/nddo-runtime/pkg/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -178,10 +179,13 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 	r.handler.Init(crName)
 
 	// get the topo
+
+	fullTopoName := odns.GetParentResourceName(cr.GetName())
+
 	topo := r.newTopology()
 	if err := r.client.Get(ctx, types.NamespacedName{
 		Namespace: cr.GetNamespace(),
-		Name:      cr.GetTopologyName()}, topo); err != nil {
+		Name:      fullTopoName}, topo); err != nil {
 		// can happen when the resource is not found
 		cr.SetStatus("down")
 		cr.SetReason("topology not found")

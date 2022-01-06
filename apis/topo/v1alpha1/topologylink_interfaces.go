@@ -23,6 +23,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	"github.com/yndd/ndd-runtime/pkg/utils"
 	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
+	"github.com/yndd/nddo-runtime/pkg/odns"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -117,22 +118,19 @@ func (x *TopologyLink) SetConditions(c ...nddv1.Condition) {
 }
 
 func (x *TopologyLink) GetOrganization() string {
-	return x.Spec.GetOrganization()
+	return odns.Name2OdnsTopoResource(x.GetName()).GetOrganization()
 }
 
 func (x *TopologyLink) GetDeployment() string {
-	return x.Spec.GetDeployment()
+	return odns.Name2OdnsTopoResource(x.GetName()).GetDeployment()
 }
 
 func (x *TopologyLink) GetAvailabilityZone() string {
-	return x.Spec.GetAvailabilityZone()
+	return odns.Name2OdnsTopoResource(x.GetName()).GetAvailabilityZone()
 }
 
 func (x *TopologyLink) GetTopologyName() string {
-	if reflect.ValueOf(x.Spec.TopologyName).IsZero() {
-		return ""
-	}
-	return *x.Spec.TopologyName
+	return odns.Name2OdnsTopoResource(x.GetName()).GetTopologyName()
 }
 
 func (x *TopologyLink) GetLinkName() string {

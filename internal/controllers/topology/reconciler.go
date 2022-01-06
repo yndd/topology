@@ -18,18 +18,21 @@ package topology
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	"github.com/yndd/nddo-runtime/pkg/odns"
 	"github.com/yndd/nddo-runtime/pkg/reconciler/managed"
 	"github.com/yndd/nddo-runtime/pkg/resource"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
 	orgv1alpha1 "github.com/yndd/nddr-org-registry/apis/org/v1alpha1"
 	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
 	"github.com/yndd/nddr-topo-registry/internal/handler"
@@ -160,19 +163,26 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tp) (m
 	r.handler.Init(crName)
 
 	// get the deployment
-	dep := r.newDeployment()
-	if err := r.client.Get(ctx, types.NamespacedName{
-		Namespace: cr.GetNamespace(),
-		Name:      cr.GetDeployment()}, dep); err != nil {
-		// can happen when the deployment is not found
-		cr.SetStatus("down")
-		cr.SetReason("organization/deployment not found")
-		return nil, errors.Wrap(err, "organization/deployment not found")
-	}
-	if dep.GetCondition(topov1alpha1.ConditionKindReady).Status != corev1.ConditionTrue {
-		cr.SetStatus("down")
-		cr.SetReason("organization/deployment not ready")
-		return nil, errors.New("organization/deployment not ready")
+
+	odaname, odakind := odns.Name2OdnsTopo(cr.GetName()).GetFullOdaName()
+	log.Debug("odaInfo", "odakind", odakind, "odaname", odaname)
+	if odakind.String() == nddov1.OdaKindDeployment.String() {
+		dep := r.newDeployment()
+		if err := r.client.Get(ctx, types.NamespacedName{
+			Namespace: cr.GetNamespace(),
+			Name:      odaname}, dep); err != nil {
+			// can happen when the deployment is not found
+			cr.SetStatus("down")
+			cr.SetReason("organization/deployment not found")
+			return nil, errors.Wrap(err, "organization/deployment not found")
+		}
+		if dep.GetCondition(topov1alpha1.ConditionKindReady).Status != corev1.ConditionTrue {
+			cr.SetStatus("down")
+			cr.SetReason("organization/deployment not ready")
+			return nil, errors.New("organization/deployment not ready")
+		}
+	} else {
+		return nil, fmt.Errorf("topo not yet supported w/o deployment: odaName: %s, odaKind: %s", odaname, odakind)
 	}
 
 	if cr.GetAdminState() == "disable" {

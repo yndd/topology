@@ -70,7 +70,7 @@ func NewHook(client resource.ClientApplicator, log logging.Logger) Hooks {
 }
 
 func (h *Hook) Get(ctx context.Context, cr topov1alpha1.Tl, topologyName string) (*topov1alpha1.TopologyLink, error) {
-	link := buildLogicalTopologyLink(cr, topologyName)
+	link := buildLogicalTopologyLink(cr)
 	h.log.Debug("hook get", "logical link name", link.GetName())
 	if err := h.client.Get(ctx, types.NamespacedName{Namespace: cr.GetNamespace(), Name: link.GetName()}, link); err != nil {
 		return nil, errors.Wrap(err, errGetLink)
@@ -79,7 +79,7 @@ func (h *Hook) Get(ctx context.Context, cr topov1alpha1.Tl, topologyName string)
 }
 
 func (h *Hook) Create(ctx context.Context, cr topov1alpha1.Tl, topologyName string) error {
-	link := buildLogicalTopologyLink(cr, topologyName)
+	link := buildLogicalTopologyLink(cr)
 	if err := h.client.Apply(ctx, link); err != nil {
 		return errors.Wrap(err, errApplyLink)
 	}

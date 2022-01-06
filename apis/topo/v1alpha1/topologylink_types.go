@@ -53,9 +53,9 @@ type TopoTopologyLinkEndpoints struct {
 
 // A TopologyLinkSpec defines the desired state of a TopologyLink.
 type TopologyLinkSpec struct {
-	nddov1.OdaInfo `json:",inline"`
-	TopologyName   *string           `json:"topology-name"`
-	TopologyLink   *TopoTopologyLink `json:"link,omitempty"`
+	//nddov1.OdaInfo `json:",inline"`
+	//TopologyName   *string           `json:"topology-name"`
+	TopologyLink *TopoTopologyLink `json:"link,omitempty"`
 }
 
 // A TopologyLinkStatus represents the observed state of a TopologyLink.

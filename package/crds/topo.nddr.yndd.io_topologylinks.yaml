@@ -83,7 +83,7 @@ spec:
             description: A TopologyLinkSpec defines the desired state of a TopologyLink.
             properties:
               link:
-                description: TopoTopologyLink struct
+                description: nddov1.OdaInfo `json:",inline"` TopologyName   *string           `json:"topology-name"`
                 properties:
                   admin-state:
                     default: enable
@@ -131,19 +131,6 @@ spec:
                       type: object
                     type: array
                 type: object
-              oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
-              topology-name:
-                type: string
-            required:
-            - topology-name
             type: object
           status:
             description: A TopologyLinkStatus represents the observed state of a TopologyLink.

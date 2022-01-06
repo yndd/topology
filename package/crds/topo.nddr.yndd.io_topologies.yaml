@@ -58,17 +58,8 @@ spec:
           spec:
             description: A TopologySpec defines the desired state of a Topology.
             properties:
-              oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
               topology:
-                description: Topology struct
+                description: nddov1.OdaInfo `json:",inline"`
                 properties:
                   admin-state:
                     default: enable

@@ -1322,11 +1322,12 @@ github.com/yndd/ndd-yang v0.1.62/go.mod h1:GT/8efIchBH1sQ6J64AM1FZDXXIaWeirkYUpb
 github.com/yndd/ndd-yang v0.1.276/go.mod h1:vcKhP5OU3oJHSEILaE0HEgZKxftcu2GFOGdS6w0TauM=
 github.com/yndd/ndda-network v0.0.6/go.mod h1:xTLmLhhuUvMwQ5wcRvVCsymcq9PDK98RoXDf+X3rC2I=
 github.com/yndd/nddo-grpc v0.0.11/go.mod h1:EtOPd2XxbxDMLMNheomiDZBQCCtY0DRdOer3MOEsgH0=
-github.com/yndd/nddo-runtime v0.0.37/go.mod h1:kuq62NH3WPNOQSwslitG0gFAGEwywcmaC9bQQ2cOm0o=
-github.com/yndd/nddo-runtime v0.0.47 h1:8MCYtdcizSu8PdeldActFKsSJEkzEYW5zr4l7bj7J2E=
-github.com/yndd/nddo-runtime v0.0.47/go.mod h1:kuq62NH3WPNOQSwslitG0gFAGEwywcmaC9bQQ2cOm0o=
-github.com/yndd/nddr-org-registry v0.0.1 h1:/1BByvwJnSPfaIXKbE+UOzcGzkyLQ2GpFE6Y22qeAFI=
-github.com/yndd/nddr-org-registry v0.0.1/go.mod h1:SufaUMhMPktSnQuE/sDth85UxmsQM6vpsZp+XMmftvM=
+github.com/yndd/nddo-grpc v0.0.16/go.mod h1:EtOPd2XxbxDMLMNheomiDZBQCCtY0DRdOer3MOEsgH0=
+github.com/yndd/nddo-runtime v0.0.49/go.mod h1:kuq62NH3WPNOQSwslitG0gFAGEwywcmaC9bQQ2cOm0o=
+github.com/yndd/nddo-runtime v0.0.53 h1:ZG/TlW2WbZwBkki3H5rtwsGbI9Jg/RzBytJnicIyevg=
+github.com/yndd/nddo-runtime v0.0.53/go.mod h1:kuq62NH3WPNOQSwslitG0gFAGEwywcmaC9bQQ2cOm0o=
+github.com/yndd/nddr-org-registry v0.0.8 h1:sgmra4eSVhwabQYTP6CQFymOPzt4ihzG92d5GwXqoHw=
+github.com/yndd/nddr-org-registry v0.0.8/go.mod h1:9nxnVFULAAtRKROBKci+acyPuFjWNMpEegIophMGdqo=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
