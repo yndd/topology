@@ -91,7 +91,7 @@ func buildLogicalTopologyLink(cr topov1alpha1.Tl) *topov1alpha1.TopologyLink {
 		// prepend the topologyname
 
 	} else {
-		name = strings.Join([]string{shPrefix, cr.GetEndpointANodeName(), cr.GetLagAName(), cr.GetEndpointBNodeName(), cr.GetLagBName()}, ".")
+		name = strings.Join([]string{shPrefix, cr.GetEndpointANodeName(), cr.GetLagAName(), cr.GetEndpointBNodeName(), cr.GetLagBName()}, "-")
 		nodeNameA = cr.GetEndpointANodeName()
 		interfaceNameA = cr.GetLagAName()
 		epATags = cr.GetEndpointATagRaw()
@@ -100,6 +100,7 @@ func buildLogicalTopologyLink(cr topov1alpha1.Tl) *topov1alpha1.TopologyLink {
 		epBTags = cr.GetEndpointBTagRaw()
 	}
 
+	// prepend the parent logic link
 	name = strings.Join([]string{odns.GetParentResourceName(cr.GetName()), name}, ".")
 
 	//ndda := nddov1.NewOdaInfo()

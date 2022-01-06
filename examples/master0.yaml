@@ -1,15 +1,9 @@
 apiVersion: topo.nddr.yndd.io/v1alpha1
 kind: TopologyNode
 metadata:
-  name: master0
+  name: nokia.region1.fabric1.master0
   namespace: default
 spec:
-  oda:
-  - key: organization
-    value: nokia
-  - key: deployment
-    value: region1
-  topology-name: fabric1
   node:
     kind-name: linux
     tag:
