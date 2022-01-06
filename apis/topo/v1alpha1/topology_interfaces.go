@@ -99,7 +99,7 @@ func (x *Topology) GetAvailabilityZone() string {
 }
 
 func (x *Topology) GetTopologyName() string {
-	return x.GetName()
+	return odns.Name2OdnsTopo(x.GetName()).GetTopologyName()
 }
 
 func (x *Topology) GetAdminState() string {

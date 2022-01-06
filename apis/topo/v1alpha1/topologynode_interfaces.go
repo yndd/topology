@@ -109,7 +109,7 @@ func (x *TopologyNode) GetTopologyName() string {
 }
 
 func (x *TopologyNode) GetNodeName() string {
-	return x.GetName()
+	return odns.Name2OdnsTopoResource(x.GetName()).GetResourceName()
 }
 
 func (x *TopologyNode) GetKindName() string {

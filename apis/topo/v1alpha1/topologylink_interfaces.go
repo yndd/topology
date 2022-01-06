@@ -134,7 +134,7 @@ func (x *TopologyLink) GetTopologyName() string {
 }
 
 func (x *TopologyLink) GetLinkName() string {
-	return x.GetName()
+	return odns.Name2OdnsTopoResource(x.GetName()).GetResourceName()
 }
 
 func (x *TopologyLink) GetAdminState() string {
