@@ -1,0 +1,10 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/henderiw/Documents/codeprojects/yndd/topology'
+rm -rf package/crds/
+/Users/henderiw/Documents/codeprojects/yndd/topology/bin/controller-gen "crd:trivialVersions=true,preserveUnknownFields=false" webhook paths="./..." output:crd:artifacts:config=package/crds
+/Users/henderiw/Documents/codeprojects/yndd/topology/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+cd apis;/Users/henderiw/Documents/codeprojects/yndd/topology/bin/ndd-gen generate-methodsets --header-file=../"hack/boilerplate.go.txt" --paths="./..."; cd ..
+go fmt ./...
+go vet ./...
+make: Leaving directory `/Users/henderiw/Documents/codeprojects/yndd/topology'
+ 

@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package topologylink
+package link
 
 import (
 	"context"
 
 	//ndddvrv1 "github.com/yndd/ndd-core/apis/dvr/v1"
+	"github.com/yndd/app-runtime/pkg/odns"
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddo-runtime/pkg/odns"
-	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
-	"github.com/yndd/nddr-topo-registry/internal/handler"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"github.com/yndd/topology/internal/handler"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -32,11 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type adder interface {
-	Add(item interface{})
-}
-
-type EnqueueRequestForAllTopologies struct {
+type EnqueueRequestForAllTopologyNodes struct {
 	client client.Client
 	log    logging.Logger
 	ctx    context.Context
@@ -47,32 +43,32 @@ type EnqueueRequestForAllTopologies struct {
 }
 
 // Create enqueues a request for all infrastructures which pertains to the topology.
-func (e *EnqueueRequestForAllTopologies) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+func (e *EnqueueRequestForAllTopologyNodes) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	e.add(evt.Object, q)
 }
 
 // Create enqueues a request for all infrastructures which pertains to the topology.
-func (e *EnqueueRequestForAllTopologies) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+func (e *EnqueueRequestForAllTopologyNodes) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 	e.add(evt.ObjectOld, q)
 	e.add(evt.ObjectNew, q)
 }
 
 // Create enqueues a request for all infrastructures which pertains to the topology.
-func (e *EnqueueRequestForAllTopologies) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+func (e *EnqueueRequestForAllTopologyNodes) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 	e.add(evt.Object, q)
 }
 
 // Create enqueues a request for all infrastructures which pertains to the topology.
-func (e *EnqueueRequestForAllTopologies) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+func (e *EnqueueRequestForAllTopologyNodes) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
 	e.add(evt.Object, q)
 }
 
-func (e *EnqueueRequestForAllTopologies) add(obj runtime.Object, queue adder) {
-	dd, ok := obj.(*topov1alpha1.Topology)
+func (e *EnqueueRequestForAllTopologyNodes) add(obj runtime.Object, queue adder) {
+	dd, ok := obj.(*topov1alpha1.TopologyNode)
 	if !ok {
 		return
 	}
-	log := e.log.WithValues("function", "watch topologies", "name", dd.GetName())
+	log := e.log.WithValues("function", "watch topology nodes", "name", dd.GetName())
 	log.Debug("topologylink handleEvent")
 
 	d := e.newTopoLinkList()
@@ -80,14 +76,13 @@ func (e *EnqueueRequestForAllTopologies) add(obj runtime.Object, queue adder) {
 		return
 	}
 
-	watchDnsName, _ := odns.Name2OdnsTopo(dd.GetName()).GetFullOdaName()
+	watchDnsName, _ := odns.Name2OdnsTopoResource(dd.GetName()).GetFullOdaName()
 
 	for _, topolink := range d.GetLinks() {
 		// only enqueue if the topology name match
 		//if topolink.GetTopologyName() == dd.GetTopologyName() {
 		linkDnsName, _ := odns.Name2OdnsTopo(topolink.GetName()).GetFullOdaName()
 		if linkDnsName == watchDnsName {
-
 			crName := getCrName(topolink)
 			e.handler.ResetSpeedy(crName)
 

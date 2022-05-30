@@ -17,12 +17,14 @@ limitations under the License.
 package intent
 
 import (
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 
 	pkgmetav1 "github.com/yndd/ndd-core/apis/pkg/meta/v1"
@@ -34,10 +36,9 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/ratelimiter"
 
-	"github.com/yndd/nddr-topo-registry/internal/controllers"
-	"github.com/yndd/nddr-topo-registry/internal/handler"
+	"github.com/yndd/topology/internal/controllers"
 
-	"github.com/yndd/nddr-topo-registry/internal/shared"
+	"github.com/yndd/ndd-target-runtime/pkg/shared"
 )
 
 var (
@@ -65,37 +66,47 @@ var startCmd = &cobra.Command{
 			// Only use a logr.Logger when debug is on
 			ctrl.SetLogger(zlog)
 		}
+		logger := logging.NewLogrLogger(zlog.WithName("topo"))
+		if profiler {
+			defer profile.Start().Stop()
+			go func() {
+				http.ListenAndServe(":8000", nil)
+			}()
+		}
+
 		zlog.Info("create manager")
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 			Scheme:                 scheme,
 			MetricsBindAddress:     metricsAddr,
 			Port:                   9443,
 			HealthProbeBindAddress: probeAddr,
-			//LeaderElection:         false,
-			LeaderElection:   enableLeaderElection,
-			LeaderElectionID: "c66ce353.ndd.yndd.io",
+			LeaderElection:         enableLeaderElection,
+			LeaderElectionID:       "c66ce353.ndd.yndd.io",
 		})
 		if err != nil {
 			return errors.Wrap(err, "Cannot create manager")
 		}
 
-		handler, err := handler.New(
-			handler.WithLogger(logging.NewLogrLogger(zlog.WithName("handler"))),
-			handler.WithClient(mgr.GetClient()),
-		)
-		if err != nil {
-			return errors.Wrap(err, "cannot initialize the handler")
-		}
-
-		nddcopts := &shared.NddControllerOptions{
-			Logger:    logging.NewLogrLogger(zlog.WithName("topology")),
-			Poll:      pollInterval,
-			Namespace: namespace,
-			Handler:   handler,
-		}
+		/*
+			handler, err := handler.New(
+				handler.WithLogger(logging.NewLogrLogger(zlog.WithName("handler"))),
+				handler.WithClient(mgr.GetClient()),
+			)
+			if err != nil {
+				return errors.Wrap(err, "cannot initialize the handler")
+			}
+		*/
 
 		// initialize controllers
-		if err := controllers.Setup(mgr, nddCtlrOptions(concurrency), nddcopts); err != nil {
+		if err := controllers.Setup(mgr, &shared.NddControllerOptions{
+			Logger:    logger,
+			Poll:      pollInterval,
+			Namespace: namespace,
+			Copts: controller.Options{
+				MaxConcurrentReconciles: concurrency,
+				RateLimiter:             ratelimiter.NewDefaultProviderRateLimiter(ratelimiter.DefaultProviderRPS),
+			},
+		}); err != nil {
 			return errors.Wrap(err, "Cannot add nddo controllers to manager")
 		}
 

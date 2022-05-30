@@ -24,32 +24,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// TopologyNodeSpec struct
-type TopologyNodeProperties struct {
-	// +kubebuilder:validation:Enum=`disable`;`enable`
-	// +kubebuilder:default:="enable"
-	AdminState string `json:"admin-state,omitempty"`
-	// kubebuilder:validation:MinLength=1
-	// kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern="[A-Za-z0-9 !@#$^&()|+=`~.,'/_:;?-]*"
-	Description string       `json:"description,omitempty"`
-	VendorType  string       `json:"vendor-type,omitempty"`
-	Index       uint32       `json:"index,omitempty"`
-	Position    string       `json:"position,omitempty"`
-	Platform    string       `json:"platform,omitempty"`
-	Tag         []*nddv1.Tag `json:"tag,omitempty"`
+// TopologyTemplateProperties define the properties of the TopologyTemplate
+type TopologyTemplateProperties struct {
 }
 
-// TopologyLinkSpec struct
-type TopologyNodeSpec struct {
+// TopologyTemplateSpec struct
+type TopologyTemplateSpec struct {
 	nddv1.ResourceSpec `json:",inline"`
-	// Properties define the properties of the TopologyNode
-	Properties *TopologyNodeProperties `json:"properties,omitempty"`
+	// Properties define the properties of the TopologyTemplate
+	Properties TopologyTemplateProperties `json:"properties,omitempty"`
 }
 
-// A TopologyNodeStatus represents the observed state of a TopologyNode.
-type TopologyNodeStatus struct {
+// A TopologyTemplateStatus represents the observed state of a TopologyTemplate.
+type TopologyTemplateStatus struct {
 	nddv1.ResourceStatus `json:",inline"`
 	//TopologyName            *string               `json:"topology-name,omitempty"`
 	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
@@ -57,7 +44,7 @@ type TopologyNodeStatus struct {
 
 // +kubebuilder:object:root=true
 
-// TopoTopologyNode is the Schema for the TopologyNode API
+// TopologyTemplate is the Schema for the TopologyTemplate API
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
@@ -65,35 +52,33 @@ type TopologyNodeStatus struct {
 // +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda[?(@.key=='deployment')].value"
 // +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availability-zone')].value"
 // +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
-// +kubebuilder:printcolumn:name="KIND",type="string",JSONPath=".spec.node.kind-name"
-// +kubebuilder:printcolumn:name="PLATFORM",type="string",JSONPath=".status.node.state.tag[?(@.key=='platform')].value"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
-type TopologyNode struct {
+type TopologyTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopologyNodeSpec   `json:"spec,omitempty"`
-	Status TopologyNodeStatus `json:"status,omitempty"`
+	Spec   TopologyTemplateSpec   `json:"spec,omitempty"`
+	Status TopologyTemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// TopoTopologyNodeList contains a list of TopologyNodes
-type TopologyNodeList struct {
+// TopologyTemplateList contains a list of TopologyTemplates
+type TopologyTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TopologyNode `json:"items"`
+	Items           []TopologyTemplate `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&TopologyNode{}, &TopologyNodeList{})
+	SchemeBuilder.Register(&TopologyTemplate{}, &TopologyTemplateList{})
 }
 
-// TopologyNode type metadata.
+// TopologyTemplate type metadata.
 var (
-	TopologyNodeKind             = reflect.TypeOf(TopologyNode{}).Name()
-	TopologyNodeGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyNodeKind}.String()
-	TopologyNodeKindAPIVersion   = TopologyNodeKind + "." + GroupVersion.String()
-	TopologyNodeGroupVersionKind = GroupVersion.WithKind(TopologyNodeKind)
+	TopologyTemplateKind             = reflect.TypeOf(TopologyTemplate{}).Name()
+	TopologyTemplateGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyTemplateKind}.String()
+	TopologyTemplateKindAPIVersion   = TopologyTemplateKind + "." + GroupVersion.String()
+	TopologyTemplateGroupVersionKind = GroupVersion.WithKind(TopologyTemplateKind)
 )

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package topologylink
+package link
 
 import (
 	"context"
@@ -24,9 +24,9 @@ import (
 
 	//nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddo-runtime/pkg/resource"
+	"github.com/yndd/ndd-runtime/pkg/resource"
 
-	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 )
 
 const (

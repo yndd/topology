@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddr-topo-registry/internal/handler"
+	"github.com/yndd/topology/internal/handler"
 )
 
 type NddControllerOptions struct {

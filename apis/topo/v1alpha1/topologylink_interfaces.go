@@ -19,11 +19,9 @@ package v1alpha1
 import (
 	"reflect"
 
+	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/resource"
-	"github.com/yndd/ndd-runtime/pkg/utils"
-	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
-	"github.com/yndd/nddo-runtime/pkg/odns"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,6 +52,20 @@ type Tl interface {
 
 	GetCondition(ct nddv1.ConditionKind) nddv1.Condition
 	SetConditions(c ...nddv1.Condition)
+
+	SetHealthConditions(c nddv1.HealthConditionedStatus)
+
+	GetDeletionPolicy() nddv1.DeletionPolicy
+	SetDeletionPolicy(p nddv1.DeletionPolicy)
+	GetDeploymentPolicy() nddv1.DeploymentPolicy
+	SetDeploymentPolicy(p nddv1.DeploymentPolicy)
+
+	GetTargetReference() *nddv1.Reference
+	SetTargetReference(p *nddv1.Reference)
+
+	GetRootPaths() []string
+	SetRootPaths(rootPaths []string)
+
 	GetOrganization() string
 	GetDeployment() string
 	GetAvailabilityZone() string
@@ -62,15 +74,15 @@ type Tl interface {
 	GetAdminState() string
 	GetDescription() string
 	GetTags() map[string]string
-	GetEndpoints() []*TopoTopologyLinkEndpoints
+	GetEndpoints() []*TopologyLinkEndpoints
 	GetEndpointANodeName() string
 	GetEndpointBNodeName() string
 	GetEndpointAInterfaceName() string
 	GetEndpointBInterfaceName() string
 	GetEndpointATag() map[string]string
 	GetEndpointBTag() map[string]string
-	GetEndpointATagRaw() []*nddov1.Tag
-	GetEndpointBTagRaw() []*nddov1.Tag
+	GetEndpointATagRaw() []*nddv1.Tag
+	GetEndpointBTagRaw() []*nddv1.Tag
 	GetEndPointAKind() string
 	GetEndPointBKind() string
 	GetEndPointAGroup() string
@@ -86,16 +98,16 @@ type Tl interface {
 	GetLacpFallbackB() bool
 	GetLagAName() string
 	GetLagBName() string
-	GetStatus() string
-	GetNodes() []*NddrTopologyTopologyLinkStateNode
-	GetStatusTagsRaw() []*nddov1.Tag
+	//GetStatus() string
+	//GetNodes() []*NddrTopologyTopologyLinkStateNode
+	//GetStatusTagsRaw() []*nddov1.Tag
 	InitializeResource() error
-	SetStatus(string)
-	SetReason(string)
-	SetNodeEndpoint(nodeName string, ep *NddrTopologyTopologyLinkStateNodeEndpoint)
-	GetNodeEndpoints() []*NddrTopologyTopologyLinkStateNode
-	SetKind(s string)
-	GetKind() string
+	//SetStatus(string)
+	//SetReason(string)
+	//SetNodeEndpoint(nodeName string, ep *NddrTopologyTopologyLinkStateNodeEndpoint)
+	//GetNodeEndpoints() []*NddrTopologyTopologyLinkStateNode
+	//SetKind(s string)
+	//GetKind() string
 	AddEndPointATag(string, string)
 	AddEndPointBTag(string, string)
 	DeleteEndPointATag(key string, value string)
@@ -104,7 +116,7 @@ type Tl interface {
 	SetOrganization(s string)
 	SetDeployment(s string)
 	SetAvailabilityZone(s string)
-	SetTopologyName(string)
+	//SetTopologyName(string)
 }
 
 // GetCondition of this Network Node.
@@ -115,6 +127,42 @@ func (x *TopologyLink) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
 // SetConditions of the Network Node.
 func (x *TopologyLink) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
+}
+
+func (x *TopologyLink) SetHealthConditions(c nddv1.HealthConditionedStatus) {
+	x.Status.Health = c
+}
+
+func (x *TopologyLink) GetDeletionPolicy() nddv1.DeletionPolicy {
+	return x.Spec.Lifecycle.DeletionPolicy
+}
+
+func (x *TopologyLink) SetDeletionPolicy(c nddv1.DeletionPolicy) {
+	x.Spec.Lifecycle.DeletionPolicy = c
+}
+
+func (x *TopologyLink) GetDeploymentPolicy() nddv1.DeploymentPolicy {
+	return x.Spec.Lifecycle.DeploymentPolicy
+}
+
+func (x *TopologyLink) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
+	x.Spec.Lifecycle.DeploymentPolicy = c
+}
+
+func (x *TopologyLink) GetTargetReference() *nddv1.Reference {
+	return x.Spec.TargetReference
+}
+
+func (x *TopologyLink) SetTargetReference(p *nddv1.Reference) {
+	x.Spec.TargetReference = p
+}
+
+func (x *TopologyLink) GetRootPaths() []string {
+	return x.Status.RootPaths
+}
+
+func (x *TopologyLink) SetRootPaths(rootPaths []string) {
+	x.Status.RootPaths = rootPaths
 }
 
 func (x *TopologyLink) GetOrganization() string {
@@ -138,78 +186,71 @@ func (x *TopologyLink) GetLinkName() string {
 }
 
 func (x *TopologyLink) GetAdminState() string {
-	if reflect.ValueOf(x.Spec.TopologyLink.AdminState).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.AdminState).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyLink.AdminState
+	return *x.Spec.Properties.AdminState
 }
 
 func (x *TopologyLink) GetDescription() string {
-	if reflect.ValueOf(x.Spec.TopologyLink.Description).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Description).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyLink.Description
+	return *x.Spec.Properties.Description
 }
 
 func (x *TopologyLink) GetTags() map[string]string {
 	s := make(map[string]string)
-	if reflect.ValueOf(x.Spec.TopologyLink.Tag).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Tag).IsZero() {
 		return s
 	}
-	for _, tag := range x.Spec.TopologyLink.Tag {
+	for _, tag := range x.Spec.Properties.Tag {
 		s[*tag.Key] = *tag.Value
 	}
 	return s
 }
 
-func (x *TopologyLink) GetStatusTagsRaw() []*nddov1.Tag {
-	if x.Status.TopologyLink != nil && x.Status.TopologyLink.Tag != nil {
-		return x.Status.TopologyLink.Tag
-	}
-	return make([]*nddov1.Tag, 0)
-}
-
-func (x *TopologyLink) GetEndpoints() []*TopoTopologyLinkEndpoints {
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+func (x *TopologyLink) GetEndpoints() []*TopologyLinkEndpoints {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return nil
 	}
-	return x.Spec.TopologyLink.Endpoints
+	return x.Spec.Properties.Endpoints
 }
 
 func (x *TopologyLink) GetEndpointANodeName() string {
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyLink.Endpoints[0].NodeName
+	return *x.Spec.Properties.Endpoints[0].NodeName
 }
 
 func (x *TopologyLink) GetEndpointBNodeName() string {
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyLink.Endpoints[1].NodeName
+	return *x.Spec.Properties.Endpoints[1].NodeName
 }
 
 func (x *TopologyLink) GetEndpointAInterfaceName() string {
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyLink.Endpoints[0].InterfaceName
+	return *x.Spec.Properties.Endpoints[0].InterfaceName
 }
 
 func (x *TopologyLink) GetEndpointBInterfaceName() string {
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyLink.Endpoints[1].InterfaceName
+	return *x.Spec.Properties.Endpoints[1].InterfaceName
 }
 
 func (x *TopologyLink) GetEndpointATag() map[string]string {
 	s := make(map[string]string)
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return s
 	}
-	for _, tag := range x.Spec.TopologyLink.Endpoints[0].Tag {
+	for _, tag := range x.Spec.Properties.Endpoints[0].Tag {
 		s[*tag.Key] = *tag.Value
 	}
 	return s
@@ -217,29 +258,29 @@ func (x *TopologyLink) GetEndpointATag() map[string]string {
 
 func (x *TopologyLink) GetEndpointBTag() map[string]string {
 	s := make(map[string]string)
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return s
 	}
-	for _, tag := range x.Spec.TopologyLink.Endpoints[1].Tag {
+	for _, tag := range x.Spec.Properties.Endpoints[1].Tag {
 		s[*tag.Key] = *tag.Value
 	}
 	return s
 }
 
-func (x *TopologyLink) GetEndpointATagRaw() []*nddov1.Tag {
-	s := make([]*nddov1.Tag, 0)
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+func (x *TopologyLink) GetEndpointATagRaw() []*nddv1.Tag {
+	s := make([]*nddv1.Tag, 0)
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return s
 	}
-	return x.Spec.TopologyLink.Endpoints[0].Tag
+	return x.Spec.Properties.Endpoints[0].Tag
 }
 
-func (x *TopologyLink) GetEndpointBTagRaw() []*nddov1.Tag {
-	s := make([]*nddov1.Tag, 0)
-	if reflect.ValueOf(x.Spec.TopologyLink.Endpoints).IsZero() {
+func (x *TopologyLink) GetEndpointBTagRaw() []*nddv1.Tag {
+	s := make([]*nddv1.Tag, 0)
+	if reflect.ValueOf(x.Spec.Properties.Endpoints).IsZero() {
 		return s
 	}
-	return x.Spec.TopologyLink.Endpoints[1].Tag
+	return x.Spec.Properties.Endpoints[1].Tag
 }
 
 func (x *TopologyLink) GetEndPointAKind() string {
@@ -360,156 +401,35 @@ func (x *TopologyLink) GetLagBName() string {
 	return ""
 }
 
-func (x *TopologyLink) GetStatus() string {
-	if x.Status.TopologyLink != nil && x.Status.TopologyLink.State != nil && x.Status.TopologyLink.State.Status != nil {
-		return *x.Status.TopologyLink.State.Status
-	}
-	return "unknown"
-}
-
-func (x *TopologyLink) GetNodes() []*NddrTopologyTopologyLinkStateNode {
-	return x.Status.TopologyLink.State.Node
-}
-
 func (x *TopologyLink) InitializeResource() error {
-	eps := make([]*NddrTopologyTopologyLinkEndpoints, 0, len(x.Spec.TopologyLink.Endpoints))
-	for _, ep := range x.Spec.TopologyLink.Endpoints {
-		epTags := make([]*nddov1.Tag, 0, len(ep.Tag))
-		for _, tag := range ep.Tag {
-			epTags = append(epTags, &nddov1.Tag{
-				Key:   tag.Key,
-				Value: tag.Value,
-			})
-		}
-
-		eps = append(eps, &NddrTopologyTopologyLinkEndpoints{
-			InterfaceName: ep.InterfaceName,
-			NodeName:      ep.NodeName,
-			Tag:           epTags,
-		})
-	}
-
-	tags := make([]*nddov1.Tag, 0, len(x.Spec.TopologyLink.Tag))
-	for _, tag := range x.Spec.TopologyLink.Tag {
-		tags = append(tags, &nddov1.Tag{
-			Key:   tag.Key,
-			Value: tag.Value,
-		})
-	}
-
-	if x.Status.TopologyLink != nil && x.Status.TopologyLink.State != nil {
-		x.Status.TopologyLink.AdminState = x.Spec.TopologyLink.AdminState
-		x.Status.TopologyLink.Description = x.Spec.TopologyLink.Description
-		x.Status.TopologyLink.Endpoints = eps
-		x.Status.TopologyLink.Tag = tags
-		return nil
-	}
-
-	x.Status.TopologyLink = &NddrTopologyTopologyLink{
-		Name:        x.Spec.TopologyLink.Name,
-		AdminState:  x.Spec.TopologyLink.AdminState,
-		Description: x.Spec.TopologyLink.Description,
-		Endpoints:   eps,
-		Tag:         tags,
-		State: &NddrTopologyTopologyLinkState{
-			Status: utils.StringPtr(""),
-			Reason: utils.StringPtr(""),
-			Node:   make([]*NddrTopologyTopologyLinkStateNode, 0),
-			Tag:    make([]*nddov1.Tag, 0),
-		},
-	}
 	return nil
 }
 
-func (x *TopologyLink) SetStatus(s string) {
-	x.Status.TopologyLink.State.Status = &s
-}
-
-func (x *TopologyLink) SetReason(s string) {
-	x.Status.TopologyLink.State.Reason = &s
-}
-
-func (x *TopologyLink) SetNodeEndpoint(nodeName string, ep *NddrTopologyTopologyLinkStateNodeEndpoint) {
-	for _, node := range x.Status.TopologyLink.State.Node {
-		if *node.Name == nodeName {
-			for _, nodeep := range node.Endpoint {
-				if *nodeep.Name == *ep.Name {
-					nodeep.Lag = ep.Lag
-					nodeep.LagMemberLink = ep.LagMemberLink
-					nodeep.Name = ep.Name
-					return
-				}
-			}
-			node.Endpoint = append(node.Endpoint, ep)
-			return
-		}
-	}
-	// if we come here we need to create the node
-	x.Status.TopologyLink.State.Node = append(x.Status.TopologyLink.State.Node, &NddrTopologyTopologyLinkStateNode{
-		Name: &nodeName,
-		Endpoint: []*NddrTopologyTopologyLinkStateNodeEndpoint{
-			ep,
-		},
-	})
-}
-
-func (x *TopologyLink) GetNodeEndpoints() []*NddrTopologyTopologyLinkStateNode {
-	if x.Status.TopologyLink != nil && x.Status.TopologyLink.State != nil && x.Status.TopologyLink.State.Node != nil {
-		return x.Status.TopologyLink.State.Node
-	}
-	return make([]*NddrTopologyTopologyLinkStateNode, 0)
-}
-
-func (x *TopologyLink) SetKind(s string) {
-	for _, tag := range x.Status.TopologyLink.State.Tag {
-		if *tag.Key == KeyLinkKind {
-			tag.Value = &s
-			return
-		}
-	}
-	x.Status.TopologyLink.State.Tag = append(x.Status.TopologyLink.State.Tag, &nddov1.Tag{
-		Key:   utils.StringPtr(KeyLinkKind),
-		Value: &s,
-	})
-}
-
-func (x *TopologyLink) GetKind() string {
-	if x.Status.TopologyLink != nil && x.Status.TopologyLink.State != nil && x.Status.TopologyLink.State.Tag != nil {
-		for _, tag := range x.Status.TopologyLink.State.Tag {
-			if *tag.Key == KeyLinkKind {
-				return *tag.Value
-			}
-		}
-
-	}
-	return LinkEPKindUnknown.String()
-}
-
 func (x *TopologyLink) AddEndPointATag(key string, value string) {
-	for _, tag := range x.Spec.TopologyLink.Endpoints[0].Tag {
+	for _, tag := range x.Spec.Properties.Endpoints[0].Tag {
 		if *tag.Key == key {
 			tag.Value = &value
 			return
 		}
 	}
 	// if not found append
-	x.Spec.TopologyLink.Endpoints[0].Tag = append(x.Spec.TopologyLink.Endpoints[0].Tag,
-		&nddov1.Tag{
+	x.Spec.Properties.Endpoints[0].Tag = append(x.Spec.Properties.Endpoints[0].Tag,
+		&nddv1.Tag{
 			Key:   &key,
 			Value: &value,
 		})
 }
 
 func (x *TopologyLink) AddEndPointBTag(key string, value string) {
-	for _, tag := range x.Spec.TopologyLink.Endpoints[1].Tag {
+	for _, tag := range x.Spec.Properties.Endpoints[1].Tag {
 		if *tag.Key == key {
 			tag.Value = &value
 			return
 		}
 	}
 	// if not found append
-	x.Spec.TopologyLink.Endpoints[1].Tag = append(x.Spec.TopologyLink.Endpoints[1].Tag,
-		&nddov1.Tag{
+	x.Spec.Properties.Endpoints[1].Tag = append(x.Spec.Properties.Endpoints[1].Tag,
+		&nddv1.Tag{
 			Key:   &key,
 			Value: &value,
 		})
@@ -518,28 +438,28 @@ func (x *TopologyLink) AddEndPointBTag(key string, value string) {
 func (x *TopologyLink) DeleteEndPointATag(key string, value string) {
 	found := false
 	var idx int
-	for i, tag := range x.Spec.TopologyLink.Endpoints[0].Tag {
+	for i, tag := range x.Spec.Properties.Endpoints[0].Tag {
 		if *tag.Key == key && *tag.Value == value {
 			idx = i
 			found = true
 		}
 	}
 	if found {
-		x.Spec.TopologyLink.Endpoints[0].Tag = append(x.Spec.TopologyLink.Endpoints[0].Tag[:idx], x.Spec.TopologyLink.Endpoints[0].Tag[idx+1:]...)
+		x.Spec.Properties.Endpoints[0].Tag = append(x.Spec.Properties.Endpoints[0].Tag[:idx], x.Spec.Properties.Endpoints[0].Tag[idx+1:]...)
 	}
 }
 
 func (x *TopologyLink) DeleteEndPointBTag(key string, value string) {
 	found := false
 	var idx int
-	for i, tag := range x.Spec.TopologyLink.Endpoints[1].Tag {
+	for i, tag := range x.Spec.Properties.Endpoints[1].Tag {
 		if *tag.Key == key && *tag.Value == value {
 			idx = i
 			found = true
 		}
 	}
 	if found {
-		x.Spec.TopologyLink.Endpoints[1].Tag = append(x.Spec.TopologyLink.Endpoints[1].Tag[:idx], x.Spec.TopologyLink.Endpoints[1].Tag[idx+1:]...)
+		x.Spec.Properties.Endpoints[1].Tag = append(x.Spec.Properties.Endpoints[1].Tag[:idx], x.Spec.Properties.Endpoints[1].Tag[idx+1:]...)
 	}
 }
 
@@ -553,8 +473,4 @@ func (x *TopologyLink) SetDeployment(s string) {
 
 func (x *TopologyLink) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
-}
-
-func (x *TopologyLink) SetTopologyName(s string) {
-	x.Status.TopologyName = &s
 }

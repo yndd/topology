@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod
@@ -11,6 +11,7 @@ RUN go mod download
 COPY cmd/ cmd/
 COPY apis/ apis/
 COPY internal/ internal/
+COPY pkg/ pkg/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager cmd/main.go
 # Use distroless as minimal base image to package the manager binary
@@ -27,7 +28,7 @@ RUN apk add --update && \
     apk add bonding && \
     rm -rf /tmp/*/var/cache/apk/*
 
-RUN curl -sL https://github.com/karimra/gnmic/raw/master/install.sh | sh
+RUN curl -sL https://get-gnmic.kmrd.dev | sh
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532

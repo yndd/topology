@@ -14,10 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
-
-import "github.com/yndd/topology/cmd/intent"
-
-func main() {
-	intent.Execute()
-}
+package definition

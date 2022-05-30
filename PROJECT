@@ -1,5 +1,5 @@
 version: "1"
 domain: nddr.yndd.io
-repository: github.com/yndd/nddr-topo-registry
-name: nddr-topo-registry
+repository: github.com/yndd/topology
+name: topology
 resources: []

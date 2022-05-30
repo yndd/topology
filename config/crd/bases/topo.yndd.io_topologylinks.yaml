@@ -1,15 +1,17 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: topologylinks.topo.nddr.yndd.io
+  name: topologylinks.topo.yndd.io
 spec:
-  group: topo.nddr.yndd.io
+  group: topo.yndd.io
   names:
+    categories:
+    - yndd
+    - topo
     kind: TopologyLink
     listKind: TopologyLinkList
     plural: topologylinks
@@ -80,10 +82,32 @@ spec:
           metadata:
             type: object
           spec:
-            description: A TopologyLinkSpec defines the desired state of a TopologyLink.
+            description: TopologyLinkSpec struct
             properties:
-              link:
-                description: nddov1.OdaInfo `json:",inline"` TopologyName   *string           `json:"topology-name"`
+              lifecycle:
+                description: Lifecycle determines the deletion and deployment lifecycle
+                  policies the resource will follow
+                properties:
+                  deletionPolicy:
+                    default: delete
+                    description: DeletionPolicy specifies what will happen to the
+                      underlying external when this managed resource is deleted -
+                      either "delete" or "orphan" the external resource.
+                    enum:
+                    - delete
+                    - orphan
+                    type: string
+                  deploymentPolicy:
+                    default: active
+                    description: Active specifies if the managed resource is active
+                      or plannned
+                    enum:
+                    - active
+                    - planned
+                    type: string
+                type: object
+              properties:
+                description: Properties define the properties of the Topology
                 properties:
                   admin-state:
                     default: enable
@@ -131,6 +155,16 @@ spec:
                       type: object
                     type: array
                 type: object
+              targetRef:
+                description: TargetReference specifies which target will be used to
+                  perform crud operations for the managed resource
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
             type: object
           status:
             description: A TopologyLinkStatus represents the observed state of a TopologyLink.
@@ -168,84 +202,53 @@ spec:
                   - status
                   type: object
                 type: array
-              link:
-                description: NddrTopologyTopologyLink struct
+              health:
+                description: the health condition status
                 properties:
-                  admin-state:
-                    type: string
-                  description:
-                    type: string
-                  endpoints:
+                  healthConditions:
+                    description: HealthConditions that determine the health status.
                     items:
-                      description: NddrTopologyTopologyLinkEndpoints struct
                       properties:
-                        interface-name:
+                        healthKind:
                           type: string
-                        node-name:
+                        lastTransitionTime:
+                          description: LastTransitionTime is the last time this condition
+                            transitioned from one status to another.
+                          format: date-time
                           type: string
-                        tag:
-                          items:
-                            properties:
-                              key:
-                                type: string
-                              value:
-                                type: string
-                            type: object
-                          type: array
+                        message:
+                          description: A Message containing details about this condition's
+                            last transition from one status to another, if any.
+                          type: string
+                        reason:
+                          description: A Reason for this condition's last transition
+                            from one status to another.
+                          type: string
+                        resourceName:
+                          description: Kind of this condition. At most one of each
+                            condition kind may apply to a resource at any point in
+                            time.
+                          type: string
+                        status:
+                          description: Status of this condition; is it currently True,
+                            False, or Unknown?
+                          type: string
                       required:
-                      - interface-name
-                      - node-name
+                      - healthKind
+                      - lastTransitionTime
+                      - resourceName
+                      - status
                       type: object
                     type: array
-                  name:
+                  lastTransitionTime:
+                    description: LastTransitionTime is the last time this condition
+                      transitioned from one status to another.
+                    format: date-time
                     type: string
-                  state:
-                    description: NddrTopologyTopologyLinkState struct
-                    properties:
-                      node:
-                        items:
-                          description: NddrTopologyTopologyLinkStateNode struct
-                          properties:
-                            endpoint:
-                              items:
-                                description: NddrTopologyTopologyLinkStateNodeEndpoint
-                                  struct
-                                properties:
-                                  lag:
-                                    type: boolean
-                                  lag-member-link:
-                                    type: boolean
-                                  name:
-                                    type: string
-                                type: object
-                              type: array
-                            name:
-                              type: string
-                          type: object
-                        type: array
-                      reason:
-                        type: string
-                      status:
-                        type: string
-                      tag:
-                        items:
-                          properties:
-                            key:
-                              type: string
-                            value:
-                              type: string
-                          type: object
-                        type: array
-                    type: object
-                  tag:
-                    items:
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                      type: object
-                    type: array
+                  percentage:
+                    description: Status of the health in percentage
+                    format: int32
+                    type: integer
                 type: object
               oda:
                 items:
@@ -256,8 +259,12 @@ spec:
                       type: string
                   type: object
                 type: array
-              topology-name:
-                type: string
+              rootPaths:
+                description: rootPaths define the rootPaths of the cr, used to monitor
+                  the resource status
+                items:
+                  type: string
+                type: array
             type: object
         type: object
     served: true

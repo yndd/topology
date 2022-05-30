@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package topologynode
+package node
 
 import (
 	"context"
@@ -22,19 +22,18 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/yndd/app-runtime/pkg/odns"
+	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddo-runtime/pkg/odns"
-	"github.com/yndd/nddo-runtime/pkg/reconciler/managed"
-	"github.com/yndd/nddo-runtime/pkg/resource"
+	"github.com/yndd/ndd-runtime/pkg/resource"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
-	"github.com/yndd/nddr-topo-registry/internal/handler"
-	"github.com/yndd/nddr-topo-registry/internal/shared"
+	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"github.com/yndd/topology/internal/handler"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -48,7 +47,7 @@ const (
 )
 
 // Setup adds a controller that reconciles infra.
-func Setup(mgr ctrl.Manager, o controller.Options, nddcopts *shared.NddControllerOptions) error {
+func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	name := "nddo/" + strings.ToLower(topov1alpha1.TopologyNodeGroupKind)
 	tnfn := func() topov1alpha1.Tn { return &topov1alpha1.TopologyNode{} }
 	tnlfn := func() topov1alpha1.TnList { return &topov1alpha1.TopologyNodeList{} }
@@ -57,7 +56,7 @@ func Setup(mgr ctrl.Manager, o controller.Options, nddcopts *shared.NddControlle
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(topov1alpha1.TopologyNodeGroupVersionKind),
 		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
-		managed.WithApplication(&application{
+		managed.WithApplogic(&application{
 			client: resource.ClientApplicator{
 				Client:     mgr.GetClient(),
 				Applicator: resource.NewAPIPatchingApplicator(mgr.GetClient()),
@@ -65,30 +64,30 @@ func Setup(mgr ctrl.Manager, o controller.Options, nddcopts *shared.NddControlle
 			log:             nddcopts.Logger.WithValues("applogic", name),
 			newTopology:     tpfn,
 			newTopologyNode: tnfn,
-			handler:         nddcopts.Handler,
+			//handler:         nddcopts.Handler,
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
 
 	topologyHandler := &EnqueueRequestForAllTopologies{
-		client:          mgr.GetClient(),
-		log:             nddcopts.Logger,
-		ctx:             context.Background(),
-		handler:         nddcopts.Handler,
+		client: mgr.GetClient(),
+		log:    nddcopts.Logger,
+		ctx:    context.Background(),
+		//handler:         nddcopts.Handler,
 		newTopoNodeList: tnlfn,
 	}
 
 	topologyLinkHandler := &EnqueueRequestForAllTopologyLinks{
-		client:          mgr.GetClient(),
-		log:             nddcopts.Logger,
-		ctx:             context.Background(),
-		handler:         nddcopts.Handler,
+		client: mgr.GetClient(),
+		log:    nddcopts.Logger,
+		ctx:    context.Background(),
+		//handler:         nddcopts.Handler,
 		newTopoNodeList: tnlfn,
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		WithOptions(o).
+		WithOptions(nddcopts.Copts).
 		For(&topov1alpha1.TopologyNode{}).
 		Owns(&topov1alpha1.TopologyNode{}).
 		WithEventFilter(resource.IgnoreUpdateWithoutGenerationChangePredicate()).
@@ -111,33 +110,37 @@ func getCrName(cr topov1alpha1.Tn) string {
 	return strings.Join([]string{cr.GetNamespace(), cr.GetName()}, ".")
 }
 
-func (r *application) Initialize(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*topov1alpha1.TopologyNode)
-	if !ok {
-		return errors.New(errUnexpectedResource)
-	}
+func (r *application) Initialize(ctx context.Context, mr resource.Managed) error {
+	/*
+		cr, ok := mg.(*topov1alpha1.TopologyNode)
+		if !ok {
+			return errors.New(errUnexpectedResource)
+		}
 
-	if err := cr.InitializeResource(); err != nil {
-		r.log.Debug("Cannot initialize", "error", err)
-		return err
-	}
-
+		if err := cr.InitializeResource(); err != nil {
+			r.log.Debug("Cannot initialize", "error", err)
+			return err
+		}
+	*/
 	return nil
 }
 
-func (r *application) Update(ctx context.Context, mg resource.Managed) (map[string]string, error) {
-	cr, ok := mg.(*topov1alpha1.TopologyNode)
-	if !ok {
-		return nil, errors.New(errUnexpectedResource)
-	}
+func (r *application) Update(ctx context.Context, mr resource.Managed) (map[string]string, error) {
+	/*
+		cr, ok := mg.(*topov1alpha1.TopologyNode)
+		if !ok {
+			return nil, errors.New(errUnexpectedResource)
+		}
+	*/
 
-	return r.handleAppLogic(ctx, cr)
+	//return r.handleAppLogic(ctx, cr)
+	return nil, nil
 }
 
-func (r *application) FinalUpdate(ctx context.Context, mg resource.Managed) {
+func (r *application) FinalUpdate(ctx context.Context, mr resource.Managed) {
 }
 
-func (r *application) Timeout(ctx context.Context, mg resource.Managed) time.Duration {
+func (r *application) Timeout(ctx context.Context, mr resource.Managed) time.Duration {
 	/*
 		cr, _ := mg.(*orgv1alpha1.Organization)
 		crName := getCrName(cr)
@@ -157,17 +160,19 @@ func (r *application) Timeout(ctx context.Context, mg resource.Managed) time.Dur
 	return reconcileTimeout
 }
 
-func (r *application) Delete(ctx context.Context, mg resource.Managed) (bool, error) {
+func (r *application) Delete(ctx context.Context, mr resource.Managed) (bool, error) {
 	return true, nil
 }
 
-func (r *application) FinalDelete(ctx context.Context, mg resource.Managed) {
-	cr, ok := mg.(*topov1alpha1.TopologyNode)
-	if !ok {
-		return
-	}
-	crName := getCrName(cr)
-	r.handler.Delete(crName)
+func (r *application) FinalDelete(ctx context.Context, mr resource.Managed) {
+	/*
+		cr, ok := mg.(*topov1alpha1.TopologyNode)
+		if !ok {
+			return
+		}
+		crName := getCrName(cr)
+		r.handler.Delete(crName)
+	*/
 }
 
 func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (map[string]string, error) {
@@ -187,13 +192,13 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 		Namespace: cr.GetNamespace(),
 		Name:      fullTopoName}, topo); err != nil {
 		// can happen when the resource is not found
-		cr.SetStatus("down")
-		cr.SetReason("topology not found")
+		//cr.SetStatus("down")
+		//cr.SetReason("topology not found")
 		return nil, errors.Wrap(err, "topology not found")
 	}
 	if topo.GetCondition(topov1alpha1.ConditionKindReady).Status != corev1.ConditionTrue {
-		cr.SetStatus("down")
-		cr.SetReason("topology not found or ready")
+		//cr.SetStatus("down")
+		//cr.SetReason("topology not found or ready")
 		return nil, errors.New("topology not ready")
 	}
 
@@ -210,41 +215,45 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 	cr.SetOrganization(cr.GetOrganization())
 	cr.SetDeployment(cr.GetDeployment())
 	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-	cr.SetTopologyName(cr.GetTopologyName())
+	//cr.SetTopologyName(cr.GetTopologyName())
 
 	return make(map[string]string), nil
 }
 
 func (r *application) handleStatus(ctx context.Context, cr topov1alpha1.Tn, topo topov1alpha1.Tp) error {
-	if cr.GetAdminState() == "disable" {
-		cr.SetStatus("down")
-		cr.SetReason("admin disabled")
-	} else {
-		cr.SetStatus("up")
-		cr.SetReason("")
-	}
+	/*
+		if cr.GetAdminState() == "disable" {
+			cr.SetStatus("down")
+			cr.SetReason("admin disabled")
+		} else {
+			cr.SetStatus("up")
+			cr.SetReason("")
+		}
+	*/
 	return nil
 }
 
 func (r *application) setPlatform(ctx context.Context, cr topov1alpha1.Tn, topo topov1alpha1.Tp) error {
-	r.log.Debug("Setflatform", "platform", cr.GetPlatform())
-	if cr.GetPlatform() == "" && cr.GetPosition() != topov1alpha1.NodePositionServer.String() {
-		// platform is not defined at node level
-		p := topo.GetPlatformByKindName(cr.GetKindName())
-		if p != "" {
-			cr.SetPlatform(p)
+	/*
+		r.log.Debug("Setflatform", "platform", cr.GetPlatform())
+		if cr.GetPlatform() == "" && cr.GetPosition() != topov1alpha1.NodePositionServer.String() {
+			// platform is not defined at node level
+			p := topo.GetPlatformByKindName(cr.GetKindName())
+			if p != "" {
+				cr.SetPlatform(p)
+				return nil
+			}
+			p = topo.GetPlatformFromDefaults()
+			if p != "" {
+				cr.SetPlatform(p)
+				return nil
+			}
+			// platform is not defined we use the global default
+			cr.SetPlatform("ixrd2")
 			return nil
-		}
-		p = topo.GetPlatformFromDefaults()
-		if p != "" {
-			cr.SetPlatform(p)
-			return nil
-		}
-		// platform is not defined we use the global default
-		cr.SetPlatform("ixrd2")
-		return nil
 
-	}
+		}
+	*/
 	// all good since the platform is already set
 	return nil
 }

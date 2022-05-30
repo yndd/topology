@@ -25,14 +25,16 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
+	targetv1 "github.com/yndd/ndd-target-runtime/apis/dvr/v1"
 	orgv1alpha1 "github.com/yndd/nddr-org-registry/apis/org/v1alpha1"
-	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
 var (
-	scheme = runtime.NewScheme()
-	debug  bool
+	scheme   = runtime.NewScheme()
+	debug    bool
+	profiler bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -54,9 +56,11 @@ func Execute() {
 func init() {
 	rootCmd.SilenceUsage = true
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "enable debug mode")
+	rootCmd.PersistentFlags().BoolVarP(&profiler, "profiler", "", false, "enable profiling")
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(topov1alpha1.AddToScheme(scheme))
 	utilruntime.Must(orgv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(targetv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

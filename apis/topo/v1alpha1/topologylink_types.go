@@ -20,13 +20,12 @@ import (
 	"reflect"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
-	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// TopoTopologyLink struct
-type TopoTopologyLink struct {
+// TopologyLinkProperties struct
+type TopologyLinkProperties struct {
 	// +kubebuilder:validation:Enum=`disable`;`enable`
 	// +kubebuilder:default:="enable"
 	AdminState *string `json:"admin-state,omitempty"`
@@ -34,36 +33,35 @@ type TopoTopologyLink struct {
 	// kubebuilder:validation:MaxLength=255
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern="[A-Za-z0-9 !@#$^&()|+=`~.,'/_:;?-]*"
-	Description *string                      `json:"description,omitempty"`
-	Endpoints   []*TopoTopologyLinkEndpoints `json:"endpoints,omitempty"`
-	Name        *string                      `json:"name,omitempty"`
-	Tag         []*nddov1.Tag                `json:"tag,omitempty"`
+	Description *string                  `json:"description,omitempty"`
+	Endpoints   []*TopologyLinkEndpoints `json:"endpoints,omitempty"`
+	Name        *string                  `json:"name,omitempty"`
+	Tag         []*nddv1.Tag             `json:"tag,omitempty"`
 }
 
 // TopologyLinkEndpoints struct
-type TopoTopologyLinkEndpoints struct {
+type TopologyLinkEndpoints struct {
 	// kubebuilder:validation:MinLength=3
 	// kubebuilder:validation:MaxLength=20
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern=`int-([1-9](\d){0,1}(/[abcd])?(/[1-9](\d){0,1})?/(([1-9](\d){0,1})|(1[0-1]\d)|(12[0-8])))|`
-	InterfaceName *string       `json:"interface-name"`
-	NodeName      *string       `json:"node-name"`
-	Tag           []*nddov1.Tag `json:"tag,omitempty"`
+	InterfaceName *string      `json:"interface-name"`
+	NodeName      *string      `json:"node-name"`
+	Tag           []*nddv1.Tag `json:"tag,omitempty"`
 }
 
-// A TopologyLinkSpec defines the desired state of a TopologyLink.
+// TopologyLinkSpec struct
 type TopologyLinkSpec struct {
-	//nddov1.OdaInfo `json:",inline"`
-	//TopologyName   *string           `json:"topology-name"`
-	TopologyLink *TopoTopologyLink `json:"link,omitempty"`
+	nddv1.ResourceSpec `json:",inline"`
+	// Properties define the properties of the Topology
+	Properties TopologyLinkProperties `json:"properties,omitempty"`
 }
 
 // A TopologyLinkStatus represents the observed state of a TopologyLink.
 type TopologyLinkStatus struct {
-	nddv1.ConditionedStatus `json:",inline"`
-	nddov1.OdaInfo          `json:",inline"`
-	TopologyName            *string                   `json:"topology-name,omitempty"`
-	TopologyLink            *NddrTopologyTopologyLink `json:"link,omitempty"`
+	nddv1.ResourceStatus `json:",inline"`
+	//TopologyName            *string               `json:"topology-name,omitempty"`
+	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -85,6 +83,7 @@ type TopologyLinkStatus struct {
 // +kubebuilder:printcolumn:name="ITFCE-EPB",type="string",JSONPath=".spec.link.endpoints[1].interface-name"
 // +kubebuilder:printcolumn:name="MH-EPB",type="string",JSONPath=".spec.link.endpoints[1].tag[?(@.key=='multihoming')].value"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:resource:categories={yndd,topo}
 type TopologyLink struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -108,8 +107,8 @@ func init() {
 
 // TopologyLink type metadata.
 var (
-	TopologyLinkKindKind         = reflect.TypeOf(TopologyLink{}).Name()
-	TopologyLinkGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyLinkKindKind}.String()
-	TopologyLinkKindAPIVersion   = TopologyLinkKindKind + "." + GroupVersion.String()
-	TopologyLinkGroupVersionKind = GroupVersion.WithKind(TopologyLinkKindKind)
+	TopologyLinkKind             = reflect.TypeOf(TopologyLink{}).Name()
+	TopologyLinkGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyLinkKind}.String()
+	TopologyLinkKindAPIVersion   = TopologyLinkKind + "." + GroupVersion.String()
+	TopologyLinkGroupVersionKind = GroupVersion.WithKind(TopologyLinkKind)
 )

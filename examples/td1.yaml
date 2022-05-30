@@ -1,0 +1,9 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: TopologyDefinition
+metadata:
+  name: nokia.region1.fabric1
+  namespace: ndd-system
+spec:
+  properties:
+    discovery-rules:
+    - name: dr1

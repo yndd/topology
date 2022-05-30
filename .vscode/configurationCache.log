@@ -1,0 +1,1 @@
+{"buildTargets":["all","build","controller-gen","docker-build","docker-push","fmt","generate","help","ndd-gen","package-build","package-push","run","test","vet"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

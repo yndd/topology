@@ -18,26 +18,22 @@ package topology
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddo-runtime/pkg/odns"
-	"github.com/yndd/nddo-runtime/pkg/reconciler/managed"
-	"github.com/yndd/nddo-runtime/pkg/resource"
-	"k8s.io/apimachinery/pkg/types"
+	"github.com/yndd/ndd-runtime/pkg/resource"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
 	orgv1alpha1 "github.com/yndd/nddr-org-registry/apis/org/v1alpha1"
-	topov1alpha1 "github.com/yndd/nddr-topo-registry/apis/topo/v1alpha1"
-	"github.com/yndd/nddr-topo-registry/internal/handler"
-	"github.com/yndd/nddr-topo-registry/internal/shared"
-	corev1 "k8s.io/api/core/v1"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"github.com/yndd/topology/internal/handler"
+
+	//"github.com/yndd/topology/internal/shared"
+	"github.com/yndd/ndd-target-runtime/pkg/shared"
 )
 
 const (
@@ -50,33 +46,32 @@ const (
 )
 
 // Setup adds a controller that reconciles infra.
-func Setup(mgr ctrl.Manager, o controller.Options, nddcopts *shared.NddControllerOptions) error {
+func Setup(mgr ctrl.Manager, nddopts *shared.NddControllerOptions) error {
 	name := "nddo/" + strings.ToLower(topov1alpha1.TopologyGroupKind)
 	topofn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
 	dpfn := func() orgv1alpha1.Dp { return &orgv1alpha1.Deployment{} }
 
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(topov1alpha1.TopologyGroupVersionKind),
-		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
-		managed.WithApplication(&application{
+		managed.WithLogger(nddopts.Logger.WithValues("controller", name)),
+		managed.WithApplogic(&application{
 			client: resource.ClientApplicator{
 				Client:     mgr.GetClient(),
 				Applicator: resource.NewAPIPatchingApplicator(mgr.GetClient()),
 			},
-			log:           nddcopts.Logger.WithValues("applogic", name),
+			log:           nddopts.Logger.WithValues("applogic", name),
 			newTopology:   topofn,
 			newDeployment: dpfn,
-			handler:       nddcopts.Handler,
+			//handler:       nddopts.Handler,
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		WithOptions(o).
+		WithOptions(nddopts.Copts).
 		For(&topov1alpha1.Topology{}).
 		Owns(&topov1alpha1.Topology{}).
-		WithEventFilter(resource.IgnoreUpdateWithoutGenerationChangePredicate()).
 		WithEventFilter(resource.IgnoreUpdateWithoutGenerationChangePredicate()).
 		Complete(r)
 }
@@ -95,8 +90,8 @@ func getCrName(cr topov1alpha1.Tp) string {
 	return strings.Join([]string{cr.GetNamespace(), cr.GetName()}, ".")
 }
 
-func (r *application) Initialize(ctx context.Context, mg resource.Managed) error {
-	cr, ok := mg.(*topov1alpha1.Topology)
+func (r *application) Initialize(ctx context.Context, mr resource.Managed) error {
+	cr, ok := mr.(*topov1alpha1.Topology)
 	if !ok {
 		return errors.New(errUnexpectedResource)
 	}
@@ -109,8 +104,8 @@ func (r *application) Initialize(ctx context.Context, mg resource.Managed) error
 	return nil
 }
 
-func (r *application) Update(ctx context.Context, mg resource.Managed) (map[string]string, error) {
-	cr, ok := mg.(*topov1alpha1.Topology)
+func (r *application) Update(ctx context.Context, mr resource.Managed) (map[string]string, error) {
+	cr, ok := mr.(*topov1alpha1.Topology)
 	if !ok {
 		return nil, errors.New(errUnexpectedResource)
 	}
@@ -118,35 +113,20 @@ func (r *application) Update(ctx context.Context, mg resource.Managed) (map[stri
 	return r.handleAppLogic(ctx, cr)
 }
 
-func (r *application) FinalUpdate(ctx context.Context, mg resource.Managed) {
+func (r *application) FinalUpdate(ctx context.Context, mr resource.Managed) {
 }
 
-func (r *application) Timeout(ctx context.Context, mg resource.Managed) time.Duration {
-	/*
-		cr, _ := mg.(*orgv1alpha1.Organization)
-		crName := getCrName(cr)
-		speedy := r.handler.GetSpeedy(crName)
-		if speedy <= 2 {
-			r.handler.IncrementSpeedy(crName)
-			r.log.Debug("Speedy incr", "number", r.handler.GetSpeedy(crName))
-			switch speedy {
-			case 0:
-				return veryShortWait
-			case 1, 2:
-				return shortWait
-			}
+func (r *application) Timeout(ctx context.Context, mr resource.Managed) time.Duration {
 
-		}
-	*/
 	return reconcileTimeout
 }
 
-func (r *application) Delete(ctx context.Context, mg resource.Managed) (bool, error) {
+func (r *application) Delete(ctx context.Context, mr resource.Managed) (bool, error) {
 	return true, nil
 }
 
-func (r *application) FinalDelete(ctx context.Context, mg resource.Managed) {
-	cr, ok := mg.(*topov1alpha1.Topology)
+func (r *application) FinalDelete(ctx context.Context, mr resource.Managed) {
+	cr, ok := mr.(*topov1alpha1.Topology)
 	if !ok {
 		return
 	}
@@ -159,46 +139,48 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tp) (m
 	log.Debug("handleAppLogic")
 
 	// initialize speedy
-	crName := getCrName(cr)
-	r.handler.Init(crName)
+	//crName := getCrName(cr)
+	//r.handler.Init(crName)
 
 	// get the deployment
 
-	odaname, odakind := odns.Name2OdnsTopo(cr.GetName()).GetFullOdaName()
-	log.Debug("odaInfo", "odakind", odakind, "odaname", odaname)
-	if odakind.String() == nddov1.OdaKindDeployment.String() {
-		dep := r.newDeployment()
-		if err := r.client.Get(ctx, types.NamespacedName{
-			Namespace: cr.GetNamespace(),
-			Name:      odaname}, dep); err != nil {
-			// can happen when the deployment is not found
-			cr.SetStatus("down")
-			cr.SetReason("organization/deployment not found")
-			return nil, errors.Wrap(err, "organization/deployment not found")
+	/*
+		odaname, odakind := odns.Name2OdnsTopo(cr.GetName()).GetFullOdaName()
+		log.Debug("odaInfo", "odakind", odakind, "odaname", odaname)
+		if odakind.String() == nddv1.OdaKindDeployment.String() {
+			dep := r.newDeployment()
+			if err := r.client.Get(ctx, types.NamespacedName{
+				Namespace: cr.GetNamespace(),
+				Name:      odaname}, dep); err != nil {
+				// can happen when the deployment is not found
+				//cr.SetStatus("down")
+				//cr.SetReason("organization/deployment not found")
+				return nil, errors.Wrap(err, "organization/deployment not found")
+			}
+			if dep.GetCondition(topov1alpha1.ConditionKindReady).Status != corev1.ConditionTrue {
+				//cr.SetStatus("down")
+				//cr.SetReason("organization/deployment not ready")
+				return nil, errors.New("organization/deployment not ready")
+			}
+		} else {
+			return nil, fmt.Errorf("topo not yet supported w/o deployment: odaName: %s, odaKind: %s", odaname, odakind)
 		}
-		if dep.GetCondition(topov1alpha1.ConditionKindReady).Status != corev1.ConditionTrue {
-			cr.SetStatus("down")
-			cr.SetReason("organization/deployment not ready")
-			return nil, errors.New("organization/deployment not ready")
-		}
-	} else {
-		return nil, fmt.Errorf("topo not yet supported w/o deployment: odaName: %s, odaKind: %s", odaname, odakind)
-	}
+	*/
 
 	if cr.GetAdminState() == "disable" {
-		cr.SetStatus("down")
-		cr.SetReason("admin disable")
+		//cr.SetStatus("down")
+		//cr.SetReason("admin disable")
 		cr.SetOrganization(cr.GetOrganization())
 		cr.SetDeployment(cr.GetDeployment())
 		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-		cr.SetTopologyName(cr.GetTopologyName())
+		//cr.SetTopologyName(cr.GetTopologyName())
 	} else {
-		cr.SetStatus("up")
-		cr.SetReason("")
+		//cr.SetStatus("up")
+		//cr.SetReason("")
 		cr.SetOrganization(cr.GetOrganization())
 		cr.SetDeployment(cr.GetDeployment())
 		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-		cr.SetTopologyName(cr.GetTopologyName())
+		//cr.SetTopologyName(cr.GetTopologyName())
 	}
 	return make(map[string]string), nil
 }

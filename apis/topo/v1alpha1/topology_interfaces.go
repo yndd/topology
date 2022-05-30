@@ -19,10 +19,9 @@ package v1alpha1
 import (
 	"reflect"
 
+	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/resource"
-	"github.com/yndd/ndd-runtime/pkg/utils"
-	"github.com/yndd/nddo-runtime/pkg/odns"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -53,6 +52,20 @@ type Tp interface {
 
 	GetCondition(ct nddv1.ConditionKind) nddv1.Condition
 	SetConditions(c ...nddv1.Condition)
+
+	SetHealthConditions(c nddv1.HealthConditionedStatus)
+
+	GetDeletionPolicy() nddv1.DeletionPolicy
+	SetDeletionPolicy(p nddv1.DeletionPolicy)
+	GetDeploymentPolicy() nddv1.DeploymentPolicy
+	SetDeploymentPolicy(p nddv1.DeploymentPolicy)
+
+	GetTargetReference() *nddv1.Reference
+	SetTargetReference(p *nddv1.Reference)
+
+	GetRootPaths() []string
+	SetRootPaths(rootPaths []string)
+
 	GetOrganization() string
 	GetDeployment() string
 	GetAvailabilityZone() string
@@ -60,20 +73,16 @@ type Tp interface {
 	GetAdminState() string
 	GetDescription() string
 	GetDefaultsTags() map[string]string
-	GetKinds() []*TopoTopologyKind
-	GetKindNames() []string
-	GetKindTagsByName(string) map[string]string
-	GetPlatformByKindName(string) string
+	GetVendorTypeInfo() []*VendorTypeInfo
+	GetKindVendorTypes() []string
+	GetKindTagsByVendorType(string) map[string]string
+	GetPlatformByVendorType(string) string
 	GetPlatformFromDefaults() string
 	InitializeResource() error
 
-	SetStatus(string)
-	SetReason(string)
-	GetStatus() string
 	SetOrganization(s string)
 	SetDeployment(s string)
 	SetAvailabilityZone(s string)
-	SetTopologyName(string)
 }
 
 // GetCondition of this Network Node.
@@ -84,6 +93,42 @@ func (x *Topology) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
 // SetConditions of the Network Node.
 func (x *Topology) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
+}
+
+func (x *Topology) SetHealthConditions(c nddv1.HealthConditionedStatus) {
+	x.Status.Health = c
+}
+
+func (x *Topology) GetDeletionPolicy() nddv1.DeletionPolicy {
+	return x.Spec.Lifecycle.DeletionPolicy
+}
+
+func (x *Topology) SetDeletionPolicy(c nddv1.DeletionPolicy) {
+	x.Spec.Lifecycle.DeletionPolicy = c
+}
+
+func (x *Topology) GetDeploymentPolicy() nddv1.DeploymentPolicy {
+	return x.Spec.Lifecycle.DeploymentPolicy
+}
+
+func (x *Topology) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
+	x.Spec.Lifecycle.DeploymentPolicy = c
+}
+
+func (x *Topology) GetTargetReference() *nddv1.Reference {
+	return x.Spec.TargetReference
+}
+
+func (x *Topology) SetTargetReference(p *nddv1.Reference) {
+	x.Spec.TargetReference = p
+}
+
+func (x *Topology) GetRootPaths() []string {
+	return x.Status.RootPaths
+}
+
+func (x *Topology) SetRootPaths(rootPaths []string) {
+	x.Status.RootPaths = rootPaths
 }
 
 func (x *Topology) GetOrganization() string {
@@ -103,26 +148,26 @@ func (x *Topology) GetTopologyName() string {
 }
 
 func (x *Topology) GetAdminState() string {
-	if reflect.ValueOf(x.Spec.Topology.AdminState).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.AdminState).IsZero() {
 		return ""
 	}
-	return *x.Spec.Topology.AdminState
+	return x.Spec.Properties.AdminState
 }
 
 func (x *Topology) GetDescription() string {
-	if reflect.ValueOf(x.Spec.Topology.Description).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Description).IsZero() {
 		return ""
 	}
-	return *x.Spec.Topology.Description
+	return x.Spec.Properties.Description
 }
 
 func (x *Topology) GetDefaultsTags() map[string]string {
 	s := make(map[string]string)
-	if reflect.ValueOf(x.Spec.Topology.Defaults).IsZero() ||
-		reflect.ValueOf(x.Spec.Topology.Defaults.Tag).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Defaults).IsZero() ||
+		reflect.ValueOf(x.Spec.Properties.Defaults.Tag).IsZero() {
 		return s
 	}
-	for _, tag := range x.Spec.Topology.Defaults.Tag {
+	for _, tag := range x.Spec.Properties.Defaults.Tag {
 		s[*tag.Key] = *tag.Value
 	}
 	return s
@@ -135,32 +180,32 @@ func (x *Topology) GetPlatformFromDefaults() string {
 	return ""
 }
 
-func (x *Topology) GetKinds() []*TopoTopologyKind {
-	if reflect.ValueOf(x.Spec.Topology.Kind).IsZero() {
+func (x *Topology) GetVendorTypeInfo() []*VendorTypeInfo {
+	if reflect.ValueOf(x.Spec.Properties.VendorTypeInfo).IsZero() {
 		return nil
 	}
-	return x.Spec.Topology.Kind
+	return x.Spec.Properties.VendorTypeInfo
 }
 
-func (x *Topology) GetKindNames() []string {
+func (x *Topology) GetKindVendorTypes() []string {
 	s := make([]string, 0)
-	if reflect.ValueOf(x.Spec.Topology.Kind).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.VendorTypeInfo).IsZero() {
 		return s
 	}
-	for _, kind := range x.Spec.Topology.Kind {
-		s = append(s, *kind.Name)
+	for _, vendorTypeInfo := range x.Spec.Properties.VendorTypeInfo {
+		s = append(s, vendorTypeInfo.VendorType)
 	}
 	return s
 }
 
-func (x *Topology) GetKindTagsByName(name string) map[string]string {
+func (x *Topology) GetKindTagsByVendorType(vendorType string) map[string]string {
 	s := make(map[string]string)
-	if reflect.ValueOf(x.Spec.Topology.Kind).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.VendorTypeInfo).IsZero() {
 		return s
 	}
-	for _, kind := range x.Spec.Topology.Kind {
-		if name == *kind.Name {
-			for _, tag := range kind.Tag {
+	for _, vendorTypeInfo := range x.Spec.Properties.VendorTypeInfo {
+		if vendorType == vendorTypeInfo.VendorType {
+			for _, tag := range vendorTypeInfo.Tag {
 				s[*tag.Key] = *tag.Value
 			}
 		}
@@ -168,55 +213,20 @@ func (x *Topology) GetKindTagsByName(name string) map[string]string {
 	return s
 }
 
-func (x *Topology) GetPlatformByKindName(name string) string {
-	if reflect.ValueOf(x.Spec.Topology.Kind).IsZero() {
+func (x *Topology) GetPlatformByVendorType(vendorType string) string {
+	if reflect.ValueOf(x.Spec.Properties.VendorTypeInfo).IsZero() {
 		return ""
 	}
-	for _, kind := range x.Spec.Topology.Kind {
-		if name == *kind.Name {
-			for _, tag := range kind.Tag {
-				if *tag.Key == KeyNodePlatform {
-					return *tag.Value
-				}
-			}
+	for _, vendorTypeInfo := range x.Spec.Properties.VendorTypeInfo {
+		if vendorType == vendorTypeInfo.VendorType {
+			return vendorTypeInfo.Platform
 		}
 	}
 	return ""
 }
 
 func (x *Topology) InitializeResource() error {
-	if x.Status.Topology != nil && x.Status.Topology.State != nil {
-		// pool was already initialiazed
-		// copy the spec, but not the state
-		x.Status.Topology.AdminState = x.Spec.Topology.AdminState
-		x.Status.Topology.Description = x.Spec.Topology.Description
-		return nil
-	}
-
-	x.Status.Topology = &NddrTopologyTopology{
-		AdminState:  x.Spec.Topology.AdminState,
-		Description: x.Spec.Topology.Description,
-		State: &NddrTopologyTopologyState{
-			Status: utils.StringPtr(""),
-			Reason: utils.StringPtr(""),
-		},
-	}
 	return nil
-}
-
-func (x *Topology) SetStatus(s string) {
-	x.Status.Topology.State.Status = &s
-}
-
-func (x *Topology) SetReason(s string) {
-	x.Status.Topology.State.Reason = &s
-}
-
-func (x *Topology) GetStatus() string {
-	if x.Status.Topology != nil && x.Status.Topology.State != nil && x.Status.Topology.State.Status != nil {
-		return *x.Status.Topology.State.Status
-	}
-	return "unknown"
 }
 
 func (x *Topology) SetOrganization(s string) {
@@ -229,8 +239,4 @@ func (x *Topology) SetDeployment(s string) {
 
 func (x *Topology) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
-}
-
-func (x *Topology) SetTopologyName(s string) {
-	x.Status.TopologyName = &s
 }

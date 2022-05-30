@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/nddo-runtime/pkg/resource"
+	"github.com/yndd/ndd-runtime/pkg/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

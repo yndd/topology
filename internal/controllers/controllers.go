@@ -18,22 +18,23 @@ package controllers
 
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	"github.com/yndd/nddr-topo-registry/internal/controllers/topology"
-	"github.com/yndd/nddr-topo-registry/internal/controllers/topologylink"
-	"github.com/yndd/nddr-topo-registry/internal/controllers/topologynode"
-	"github.com/yndd/nddr-topo-registry/internal/shared"
+	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	"github.com/yndd/topology/internal/controllers/definition"
+	"github.com/yndd/topology/internal/controllers/link"
+	"github.com/yndd/topology/internal/controllers/node"
+	"github.com/yndd/topology/internal/controllers/topology"
 )
 
 // Setup package controllers.
-func Setup(mgr ctrl.Manager, option controller.Options, nddcopts *shared.NddControllerOptions) error {
-	for _, setup := range []func(ctrl.Manager, controller.Options, *shared.NddControllerOptions) error{
+func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
+	for _, setup := range []func(ctrl.Manager, *shared.NddControllerOptions) error{
+		definition.Setup,
 		topology.Setup,
-		topologylink.Setup,
-		topologynode.Setup,
+		link.Setup,
+		node.Setup,
 	} {
-		if err := setup(mgr, option, nddcopts); err != nil {
+		if err := setup(mgr, nddcopts); err != nil {
 			return err
 		}
 	}

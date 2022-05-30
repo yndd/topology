@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package v1alpha1 contains API Schema definitions for the topo v1alpha1 API group
 //+kubebuilder:object:generate=true
-//+groupName=topo.nddr.yndd.io
+//+groupName=topo.yndd.io
 package v1alpha1
 
 import (
@@ -26,14 +26,14 @@ import (
 
 const (
 	// Group in the kubernetes api
-	Group = "topo.nddr.yndd.io"
+	Group = "topo.yndd.io"
 	// Version in the kubernetes api
 	Version = "v1alpha1"
 )
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "topo.nddr.yndd.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: Group, Version: Version}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

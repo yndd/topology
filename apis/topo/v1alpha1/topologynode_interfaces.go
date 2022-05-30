@@ -20,11 +20,9 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/resource"
-	"github.com/yndd/ndd-runtime/pkg/utils"
-	nddov1 "github.com/yndd/nddo-runtime/apis/common/v1"
-	"github.com/yndd/nddo-runtime/pkg/odns"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -55,31 +53,45 @@ type Tn interface {
 
 	GetCondition(ct nddv1.ConditionKind) nddv1.Condition
 	SetConditions(c ...nddv1.Condition)
+
+	SetHealthConditions(c nddv1.HealthConditionedStatus)
+
+	GetDeletionPolicy() nddv1.DeletionPolicy
+	SetDeletionPolicy(p nddv1.DeletionPolicy)
+	GetDeploymentPolicy() nddv1.DeploymentPolicy
+	SetDeploymentPolicy(p nddv1.DeploymentPolicy)
+
+	GetTargetReference() *nddv1.Reference
+	SetTargetReference(p *nddv1.Reference)
+
+	GetRootPaths() []string
+	SetRootPaths(rootPaths []string)
+
 	GetOrganization() string
 	GetDeployment() string
 	GetAvailabilityZone() string
 	GetTopologyName() string
 	GetNodeName() string
-	GetKindName() string
+	GetVendorType() string
 	GetAdminState() string
 	GetDescription() string
 	GetTags() map[string]string
-	GetStateTags() map[string]string
-	GetPlatform() string
+	//GetStateTags() map[string]string
+	//GetPlatform() string
 	GetPosition() string
 	GetNodeIndex() uint32
-	GetStatus() string
 	InitializeResource() error
-	SetStatus(string)
-	SetReason(string)
-	SetPlatform(string)
-	SetPosition(string)
-	SetNodeEndpoint(ep *NddrTopologyTopologyLinkStateNodeEndpoint)
-	GetNodeEndpoints() []*NddrTopologyTopologyNodeStateEndpoint
+
+	//SetStatus(string)
+	//SetReason(string)
+	//SetPlatform(string)
+	//SetPosition(string)
+	//SetNodeEndpoint(ep *NddrTopologyTopologyLinkStateNodeEndpoint)
+	//GetNodeEndpoints() []*NddrTopologyTopologyNodeStateEndpoint
 	SetOrganization(s string)
 	SetDeployment(s string)
 	SetAvailabilityZone(s string)
-	SetTopologyName(string)
+	//SetTopologyName(string)
 }
 
 // GetCondition of this Network Node.
@@ -90,6 +102,42 @@ func (x *TopologyNode) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
 // SetConditions of the Network Node.
 func (x *TopologyNode) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
+}
+
+func (x *TopologyNode) SetHealthConditions(c nddv1.HealthConditionedStatus) {
+	x.Status.Health = c
+}
+
+func (x *TopologyNode) GetDeletionPolicy() nddv1.DeletionPolicy {
+	return x.Spec.Lifecycle.DeletionPolicy
+}
+
+func (x *TopologyNode) SetDeletionPolicy(c nddv1.DeletionPolicy) {
+	x.Spec.Lifecycle.DeletionPolicy = c
+}
+
+func (x *TopologyNode) GetDeploymentPolicy() nddv1.DeploymentPolicy {
+	return x.Spec.Lifecycle.DeploymentPolicy
+}
+
+func (x *TopologyNode) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
+	x.Spec.Lifecycle.DeploymentPolicy = c
+}
+
+func (x *TopologyNode) GetTargetReference() *nddv1.Reference {
+	return x.Spec.TargetReference
+}
+
+func (x *TopologyNode) SetTargetReference(p *nddv1.Reference) {
+	x.Spec.TargetReference = p
+}
+
+func (x *TopologyNode) GetRootPaths() []string {
+	return x.Status.RootPaths
+}
+
+func (x *TopologyNode) SetRootPaths(rootPaths []string) {
+	x.Status.RootPaths = rootPaths
 }
 
 func (x *TopologyNode) GetOrganization() string {
@@ -112,61 +160,36 @@ func (x *TopologyNode) GetNodeName() string {
 	return odns.Name2OdnsTopoResource(x.GetName()).GetResourceName()
 }
 
-func (x *TopologyNode) GetKindName() string {
-	if reflect.ValueOf(x.Spec.TopologyNode.KindName).IsZero() {
+func (x *TopologyNode) GetVendorType() string {
+	if reflect.ValueOf(x.Spec.Properties.VendorType).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyNode.KindName
+	return x.Spec.Properties.VendorType
 }
 
 func (x *TopologyNode) GetAdminState() string {
-	if reflect.ValueOf(x.Spec.TopologyNode.AdminState).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.AdminState).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyNode.AdminState
+	return x.Spec.Properties.AdminState
 }
 
 func (x *TopologyNode) GetDescription() string {
-	if reflect.ValueOf(x.Spec.TopologyNode.Description).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Description).IsZero() {
 		return ""
 	}
-	return *x.Spec.TopologyNode.Description
+	return x.Spec.Properties.Description
 }
 
 func (x *TopologyNode) GetTags() map[string]string {
 	s := make(map[string]string)
-	if reflect.ValueOf(x.Spec.TopologyNode.Tag).IsZero() {
+	if reflect.ValueOf(x.Spec.Properties.Tag).IsZero() {
 		return s
 	}
-	for _, tag := range x.Spec.TopologyNode.Tag {
+	for _, tag := range x.Spec.Properties.Tag {
 		s[*tag.Key] = *tag.Value
 	}
 	return s
-}
-
-func (x *TopologyNode) GetStatus() string {
-	if x.Status.TopologyNode != nil && x.Status.TopologyNode.State != nil && x.Status.TopologyNode.State.Status != nil {
-		return *x.Status.TopologyNode.State.Status
-	}
-	return "unknown"
-}
-
-func (x *TopologyNode) GetStateTags() map[string]string {
-	s := make(map[string]string)
-	if reflect.ValueOf(x.Status.TopologyNode.State.Tag).IsZero() {
-		return s
-	}
-	for _, tag := range x.Status.TopologyNode.State.Tag {
-		s[*tag.Key] = *tag.Value
-	}
-	return s
-}
-
-func (x *TopologyNode) GetPlatform() string {
-	if t, ok := x.GetStateTags()[KeyNodePlatform]; ok {
-		return t
-	}
-	return ""
 }
 
 func (x *TopologyNode) GetPosition() string {
@@ -187,101 +210,7 @@ func (x *TopologyNode) GetNodeIndex() uint32 {
 }
 
 func (x *TopologyNode) InitializeResource() error {
-	tags := make([]*nddov1.Tag, 0, len(x.Spec.TopologyNode.Tag))
-	for _, tag := range x.Spec.TopologyNode.Tag {
-		tags = append(tags, &nddov1.Tag{
-			Key:   tag.Key,
-			Value: tag.Value,
-		})
-	}
-
-	if x.Status.TopologyNode != nil && x.Status.TopologyNode.State != nil {
-		// pool was already initialiazed
-		x.Status.TopologyNode.AdminState = x.Spec.TopologyNode.AdminState
-		x.Status.TopologyNode.Description = x.Spec.TopologyNode.Description
-		x.Status.TopologyNode.KindName = x.Spec.TopologyNode.KindName
-		x.Status.TopologyNode.Tag = tags
-		return nil
-	}
-
-	x.Status.TopologyNode = &NddrTopologyTopologyNode{
-		AdminState:  x.Spec.TopologyNode.AdminState,
-		Description: x.Spec.TopologyNode.Description,
-		KindName:    x.Spec.TopologyNode.KindName,
-		Tag:         tags,
-		State: &NddrTopologyTopologyNodeState{
-			Status:   utils.StringPtr(""),
-			Reason:   utils.StringPtr(""),
-			Endpoint: make([]*NddrTopologyTopologyNodeStateEndpoint, 0),
-			Tag:      make([]*nddov1.Tag, 0),
-		},
-	}
 	return nil
-}
-
-func (x *TopologyNode) SetStatus(s string) {
-	x.Status.TopologyNode.State.Status = &s
-}
-
-func (x *TopologyNode) SetReason(s string) {
-	x.Status.TopologyNode.State.Reason = &s
-}
-
-func (x *TopologyNode) SetPlatform(s string) {
-	for _, tag := range x.Status.TopologyNode.State.Tag {
-		if *tag.Key == KeyNodePlatform {
-			tag.Value = &s
-			return
-		}
-	}
-	x.Status.TopologyNode.State.Tag = append(x.Status.TopologyNode.State.Tag, &nddov1.Tag{
-		Key:   utils.StringPtr(KeyNodePlatform),
-		Value: &s,
-	})
-}
-
-func (x *TopologyNode) SetPosition(s string) {
-	for _, tag := range x.Spec.TopologyNode.Tag {
-		if *tag.Key == KeyNodePosition {
-			tag.Value = &s
-			return
-		}
-	}
-	x.Spec.TopologyNode.Tag = append(x.Spec.TopologyNode.Tag, &nddov1.Tag{
-		Key:   utils.StringPtr(KeyNodePosition),
-		Value: &s,
-	})
-}
-
-func (x *TopologyNode) SetNodeEndpoint(ep *NddrTopologyTopologyLinkStateNodeEndpoint) {
-	if x.Status.TopologyNode.State.Endpoint == nil {
-		x.Status.TopologyNode.State.Endpoint = make([]*NddrTopologyTopologyNodeStateEndpoint, 0)
-	}
-	for _, nodeep := range x.Status.TopologyNode.State.Endpoint {
-		if *nodeep.Name == *ep.Name {
-			// endpoint exists, so we update the information
-			nodeep = &NddrTopologyTopologyNodeStateEndpoint{
-				Name:       ep.Name,
-				Lag:        ep.Lag,
-				LagSubLink: ep.LagMemberLink,
-			}
-			return
-		}
-	}
-	// new endpoint
-	x.Status.TopologyNode.State.Endpoint = append(x.Status.TopologyNode.State.Endpoint,
-		&NddrTopologyTopologyNodeStateEndpoint{
-			Name:       ep.Name,
-			Lag:        ep.Lag,
-			LagSubLink: ep.LagMemberLink,
-		})
-}
-
-func (x *TopologyNode) GetNodeEndpoints() []*NddrTopologyTopologyNodeStateEndpoint {
-	if x.Status.TopologyNode != nil && x.Status.TopologyNode.State != nil && x.Status.TopologyNode.State.Endpoint != nil {
-		return x.Status.TopologyNode.State.Endpoint
-	}
-	return make([]*NddrTopologyTopologyNodeStateEndpoint, 0)
 }
 
 func (x *TopologyNode) SetOrganization(s string) {
@@ -294,8 +223,4 @@ func (x *TopologyNode) SetDeployment(s string) {
 
 func (x *TopologyNode) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
-}
-
-func (x *TopologyNode) SetTopologyName(s string) {
-	x.Status.TopologyName = &s
 }
