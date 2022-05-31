@@ -56,6 +56,7 @@ const (
 // set multihoming-name to a global unique name
 // -> the link reconciler creates a new logical link with name : <prefix:logical-mh-link>-<multihoming-name>-<node-name-epB><lag-name-epB>)
 
+/*
 type NodePosition string
 
 const (
@@ -108,3 +109,4 @@ func (s LinkEPKind) String() string {
 	}
 	return "unknown"
 }
+*/

@@ -24,39 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// TopologyProperties struct
-type TopologyProperties struct {
-	// +kubebuilder:validation:Enum=`disable`;`enable`
-	// +kubebuilder:default:="enable"
-	AdminState string            `json:"admin-state,omitempty"`
-	Defaults   *TopologyDefaults `json:"defaults,omitempty"`
-	// kubebuilder:validation:MinLength=1
-	// kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern="[A-Za-z0-9 !@#$^&()|+=`~.,'/_:;?-]*"
-	Description    string            `json:"description,omitempty"`
-	VendorTypeInfo []*VendorTypeInfo `json:"vendor-type-info,omitempty"`
-}
-
-// TopologySpecDefaults struct
-type TopologyDefaults struct {
-	NodeAttributes *NodeAttributes `json:",inline"`
-	Tag            []*nddv1.Tag    `json:"tag,omitempty"`
-}
-
-// TopologyKind struct
-type VendorTypeInfo struct {
-	// Name = nokia-srl or nokia-sros
-	VendorType     string          `json:"vendor-type"`
-	Platform       string          `json:"platform"`
-	NodeAttributes *NodeAttributes `json:",inline"`
-	Tag            []*nddv1.Tag    `json:"tag,omitempty"`
-}
-
-type NodeAttributes struct {
-	Position string `json:"position,omitempty"`
-}
-
 // TopologyDefinitionSpec struct
 type TopologySpec struct {
 	nddv1.ResourceSpec `json:",inline"`
@@ -67,8 +34,18 @@ type TopologySpec struct {
 // A TopologyStatus represents the observed state of a Topology.
 type TopologyStatus struct {
 	nddv1.ResourceStatus `json:",inline"`
-	//TopologyName            *string               `json:"topology-name,omitempty"`
-	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
+}
+
+// TopologyProperties struct
+type TopologyProperties struct {
+	Defaults       *TopologyDefaults `json:"defaults,omitempty"`
+	VendorTypeInfo []*NodeProperties `json:"vendorTypeInfo,omitempty"`
+}
+
+// TopologySpecDefaults struct
+type TopologyDefaults struct {
+	NodeProperties *NodeProperties   `json:",inline"`
+	Tag            map[string]string `json:"tag,omitempty"`
 }
 
 // +kubebuilder:object:root=true

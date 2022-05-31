@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/yndd/app-runtime/pkg/odns"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
+	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/resource"
@@ -48,22 +49,22 @@ const (
 
 // Setup adds a controller that reconciles infra.
 func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
-	name := "nddo/" + strings.ToLower(topov1alpha1.TopologyNodeGroupKind)
-	tnfn := func() topov1alpha1.Tn { return &topov1alpha1.TopologyNode{} }
-	tnlfn := func() topov1alpha1.TnList { return &topov1alpha1.TopologyNodeList{} }
-	tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
+	name := "nddo/" + strings.ToLower(topov1alpha1.NodeGroupKind)
+	//tnfn := func() topov1alpha1.Tn { return &topov1alpha1.TopologyNode{} }
+	//tnlfn := func() topov1alpha1.TnList { return &topov1alpha1.TopologyNodeList{} }
+	//tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(topov1alpha1.TopologyNodeGroupVersionKind),
+		resource.ManagedKind(topov1alpha1.NodeGroupVersionKind),
 		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
 		managed.WithApplogic(&application{
 			client: resource.ClientApplicator{
 				Client:     mgr.GetClient(),
 				Applicator: resource.NewAPIPatchingApplicator(mgr.GetClient()),
 			},
-			log:             nddcopts.Logger.WithValues("applogic", name),
-			newTopology:     tpfn,
-			newTopologyNode: tnfn,
+			log: nddcopts.Logger.WithValues("applogic", name),
+			//newTopology:     tpfn,
+			//newTopologyNode: tnfn,
 			//handler:         nddcopts.Handler,
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -74,7 +75,7 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 		log:    nddcopts.Logger,
 		ctx:    context.Background(),
 		//handler:         nddcopts.Handler,
-		newTopoNodeList: tnlfn,
+		//newTopoNodeList: tnlfn,
 	}
 
 	topologyLinkHandler := &EnqueueRequestForAllTopologyLinks{
@@ -82,17 +83,17 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 		log:    nddcopts.Logger,
 		ctx:    context.Background(),
 		//handler:         nddcopts.Handler,
-		newTopoNodeList: tnlfn,
+		//newTopoNodeList: tnlfn,
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(nddcopts.Copts).
-		For(&topov1alpha1.TopologyNode{}).
-		Owns(&topov1alpha1.TopologyNode{}).
+		For(&topov1alpha1.Node{}).
+		Owns(&topov1alpha1.Node{}).
 		WithEventFilter(resource.IgnoreUpdateWithoutGenerationChangePredicate()).
 		Watches(&source.Kind{Type: &topov1alpha1.Topology{}}, topologyHandler).
-		Watches(&source.Kind{Type: &topov1alpha1.TopologyLink{}}, topologyLinkHandler).
+		Watches(&source.Kind{Type: &topov1alpha1.Link{}}, topologyLinkHandler).
 		Complete(r)
 }
 
@@ -100,13 +101,13 @@ type application struct {
 	client resource.ClientApplicator
 	log    logging.Logger
 
-	newTopology     func() topov1alpha1.Tp
-	newTopologyNode func() topov1alpha1.Tn
+	//newTopology     func() topov1alpha1.Tp
+	//newTopologyNode func() topov1alpha1.Tn
 
 	handler handler.Handler
 }
 
-func getCrName(cr topov1alpha1.Tn) string {
+func getCrName(cr *topov1alpha1.Node) string {
 	return strings.Join([]string{cr.GetNamespace(), cr.GetName()}, ".")
 }
 
@@ -175,7 +176,7 @@ func (r *application) FinalDelete(ctx context.Context, mr resource.Managed) {
 	*/
 }
 
-func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (map[string]string, error) {
+func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Node) (map[string]string, error) {
 	log := r.log.WithValues("function", "handleAppLogic", "crname", cr.GetName())
 	log.Debug("handleAppLogic")
 
@@ -187,7 +188,8 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 
 	fullTopoName := odns.GetParentResourceName(cr.GetName())
 
-	topo := r.newTopology()
+	//topo := r.newTopology()
+	topo := &topov1alpha1.Topology{}
 	if err := r.client.Get(ctx, types.NamespacedName{
 		Namespace: cr.GetNamespace(),
 		Name:      fullTopoName}, topo); err != nil {
@@ -196,7 +198,7 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 		//cr.SetReason("topology not found")
 		return nil, errors.Wrap(err, "topology not found")
 	}
-	if topo.GetCondition(topov1alpha1.ConditionKindReady).Status != corev1.ConditionTrue {
+	if topo.GetCondition(nddv1.ConditionKindReady).Status != corev1.ConditionTrue {
 		//cr.SetStatus("down")
 		//cr.SetReason("topology not found or ready")
 		return nil, errors.New("topology not ready")
@@ -212,15 +214,15 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tn) (m
 		return nil, err
 	}
 
-	cr.SetOrganization(cr.GetOrganization())
-	cr.SetDeployment(cr.GetDeployment())
-	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
+	//cr.SetOrganization(cr.GetOrganization())
+	//cr.SetDeployment(cr.GetDeployment())
+	//cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 	//cr.SetTopologyName(cr.GetTopologyName())
 
 	return make(map[string]string), nil
 }
 
-func (r *application) handleStatus(ctx context.Context, cr topov1alpha1.Tn, topo topov1alpha1.Tp) error {
+func (r *application) handleStatus(ctx context.Context, cr *topov1alpha1.Node, topo *topov1alpha1.Topology) error {
 	/*
 		if cr.GetAdminState() == "disable" {
 			cr.SetStatus("down")
@@ -233,7 +235,7 @@ func (r *application) handleStatus(ctx context.Context, cr topov1alpha1.Tn, topo
 	return nil
 }
 
-func (r *application) setPlatform(ctx context.Context, cr topov1alpha1.Tn, topo topov1alpha1.Tp) error {
+func (r *application) setPlatform(ctx context.Context, cr *topov1alpha1.Node, topo *topov1alpha1.Topology) error {
 	/*
 		r.log.Debug("Setflatform", "platform", cr.GetPlatform())
 		if cr.GetPlatform() == "" && cr.GetPosition() != topov1alpha1.NodePositionServer.String() {

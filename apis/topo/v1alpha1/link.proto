@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package topo.v1alpha1;
+
+//import "github.com/yndd/ndd_runtime/apis/common/v1/resource.proto";
+//import "apis/topo/v1alpha1";
+
+option go_package = "github.com/yndd/topology/apis/topo/v1alpha1";
+
+message LinkSpec {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceSpec managed = 1;
+    LinkProperties properties = 2;
+}
+
+message LinkStatus {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceStatus managed = 1;
+}
+
+message LinkProperties {
+    repeated Endpoint endpoints = 1;
+    bool lagMember = 2;
+    bool lacp = 3;
+    LinkKindProperties kind = 4;
+    map<string, string> tag = 5;
+}
+
+message Endpoint {
+    // mandatory key in endpoint
+    string interfaceName = 1;
+    // mandatory key in endpoint
+    string nodeName = 2;
+    EndpointKindProperties kind = 3;
+    bool lacpFallback = 4;
+    string endPointGroup = 5;
+    string lagName = 6;
+    bool multiHoming =7;
+    string multiHominggName = 8;
+    map<string, string> tag = 9;
+}
+
+enum LinkKindProperties {
+    // indicated the link kind is unknown
+    LinkKind_Unknown = 0;
+    // indicated if the link is part of the internal infrastructure
+    LinkKind_Infra = 1;
+    // indicates that both ends of the link end on the same node
+    LinkKind_Loop = 2;
+}
+
+enum EndpointKindProperties {
+    // indicated the link endpoint kind is unknown
+    EndpointKind_Unknown = 0;
+    // indicated that the link endpoint is part of the internal infrastructure
+    EndpointKind_Infra = 1;
+    // indicates that both ends of the link end on the same node
+    EndpointKind_Loop = 2;
+    // indicates that the link endpoint is externally connected
+    EndpointKind_External = 3;
+    // indicates that the link endpoint is oob
+    EndpointKind_Oob = 4;
+}

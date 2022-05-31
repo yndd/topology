@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package topo.v1alpha1;
+
+//import "github.com/yndd/ndd_runtime/apis/common/v1/resource.proto";
+import "apis/topo/v1alpha1/node.proto";
+
+option go_package = "github.com/yndd/topology/apis/topo/v1alpha1";
+
+message TopologySpec {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceSpec managed = 1;
+    TopologyProperties properties = 2;
+}
+
+message TopologyStatus {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceStatus managed = 1;
+}
+
+message TopologyProperties {
+    TopologyDefaults defaults = 1;
+}
+
+message TopologyDefaults {
+    Position position = 1;
+    repeated VendorTypeInfo vendorTypeInfo = 2;
+}

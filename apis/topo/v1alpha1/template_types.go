@@ -22,37 +22,22 @@ import (
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	//targetv1alpha1pb "github.com/yndd/topology/gen/go/apis/topo/v1alpha1"
 )
 
-// TopologyDefinitionProperties define the properties of the TopologyDefinition
-type TopologyDefinitionProperties struct {
-	Templates      []*Template      `json:"templates,omitempty"`
-	DiscoveryRules []*DiscoveryRule `json:"discovery-rules,omitempty"`
+// TemplateProperties define the properties of the Template
+type TemplateProperties struct {
 }
 
-type Template struct {
-	Rule `json:",inline"`
-}
-
-type DiscoveryRule struct {
-	Rule `json:",inline"`
-}
-
-type Rule struct {
-	Name string `json:"name"`
-	// +kubebuilder:default=false
-	DigitalTwin bool `json:"digital-twin,omitempty"`
-}
-
-// TopologyDefinitionSpec struct
-type TopologyDefinitionSpec struct {
+// TemplateSpec struct
+type TemplateSpec struct {
 	nddv1.ResourceSpec `json:",inline"`
-	// Properties define the properties of the TopologyDefinition
-	Properties TopologyDefinitionProperties `json:"properties,omitempty"`
+	// Properties define the properties of the Template
+	Properties TemplateProperties `json:"properties,omitempty"`
 }
 
-// A TopologyDefinitionStatus represents the observed state of a TopologyDefinition.
-type TopologyDefinitionStatus struct {
+// A TemplateStatus represents the observed state of a Template.
+type TemplateStatus struct {
 	nddv1.ResourceStatus `json:",inline"`
 	//TopologyName            *string               `json:"topology-name,omitempty"`
 	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
@@ -60,7 +45,7 @@ type TopologyDefinitionStatus struct {
 
 // +kubebuilder:object:root=true
 
-// TopologyDefinition is the Schema for the Topology API
+// Template is the Schema for the Template API
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
@@ -70,31 +55,31 @@ type TopologyDefinitionStatus struct {
 // +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
-type TopologyDefinition struct {
+type Template struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopologyDefinitionSpec   `json:"spec,omitempty"`
-	Status TopologyDefinitionStatus `json:"status,omitempty"`
+	//Spec   targetv1alpha1pb.TemplateSpec   `json:"spec,omitempty"`
+	//Status targetv1alpha1pb.TemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// TopologyDefinitionList contains a list of TopologyDefinitions
-type TopologyDefinitionList struct {
+// TemplateList contains a list of Templates
+type TemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TopologyDefinition `json:"items"`
+	Items           []Template `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&TopologyDefinition{}, &TopologyDefinitionList{})
+	SchemeBuilder.Register(&Template{}, &TemplateList{})
 }
 
-// TopologyDefinition type metadata.
+// Template type metadata.
 var (
-	TopologyDefinitionKind             = reflect.TypeOf(TopologyDefinition{}).Name()
-	TopologyDefinitionGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyDefinitionKind}.String()
-	TopologyDefinitionKindAPIVersion   = TopologyDefinitionKind + "." + GroupVersion.String()
-	TopologyDefinitionGroupVersionKind = GroupVersion.WithKind(TopologyDefinitionKind)
+	TemplateKind             = reflect.TypeOf(Template{}).Name()
+	TemplateGroupKind        = schema.GroupKind{Group: Group, Kind: TemplateKind}.String()
+	TemplateKindAPIVersion   = TemplateKind + "." + GroupVersion.String()
+	TemplateGroupVersionKind = GroupVersion.WithKind(TemplateKind)
 )

@@ -3,13 +3,15 @@ module github.com/yndd/topology
 go 1.17
 
 require (
+	github.com/golang/protobuf v1.5.2
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.6.0
 	github.com/spf13/cobra v1.4.0
 	github.com/yndd/app-runtime v0.0.6
 	github.com/yndd/ndd-core v0.2.21
-	github.com/yndd/ndd-runtime v0.5.11
+	github.com/yndd/ndd-runtime v0.5.13
 	github.com/yndd/ndd-target-runtime v0.0.51
+	github.com/yndd/ndd_runtime v0.1.2
 	github.com/yndd/nddr-org-registry v0.0.13
 	k8s.io/api v0.24.1
 	k8s.io/apimachinery v0.24.1
@@ -36,7 +38,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -71,7 +72,7 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/yndd/nddo-runtime v0.0.72 // indirect
-	github.com/yndd/registrator v0.0.15 // indirect
+	github.com/yndd/registrator v0.0.19 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect

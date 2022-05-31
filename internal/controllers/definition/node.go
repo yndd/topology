@@ -25,21 +25,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func renderNode(drName string, cr *topov1alpha1.TopologyDefinition, t targetv1.Tg) *topov1alpha1.TopologyNode { // nolint:interfacer,gocyclo
-	return &topov1alpha1.TopologyNode{
+func renderNode(drName string, cr *topov1alpha1.Definition, t targetv1.Tg) *topov1alpha1.Node { // nolint:interfacer,gocyclo
+	return &topov1alpha1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.Join([]string{cr.GetName(), t.GetName()}, "."),
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
 				LabelKeyDiscoveryRule: drName,
 			},
-			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.TopologyDefinitionGroupVersionKind))},
+			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.DefinitionGroupVersionKind))},
 		},
-		Spec: topov1alpha1.TopologyNodeSpec{
-			Properties: &topov1alpha1.TopologyNodeProperties{
-				AdminState: "enable",
-				VendorType: *t.GetDiscoveryInfo().VendorType,
-				Platform:   *t.GetDiscoveryInfo().Kind,
+		Spec: topov1alpha1.NodeSpec{
+			Properties: &topov1alpha1.NodeProperties{
+				//VendorType: t.GetDiscoveryInfo().VendorType,
+				Platform: *t.GetDiscoveryInfo().Kind,
 				//Index:
 				//Position:
 				// Tags://

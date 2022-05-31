@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package topo.v1alpha1;
+
+//import "github.com/yndd/ndd_runtime/apis/common/v1/resource.proto";
+//import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/yndd/topology/apis/topo/v1alpha1";
+
+message NodeSpec {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceSpec managed = 1;
+    NodeProperties properties = 2;
+}
+
+message NodeStatus {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceStatus managed = 1;
+}
+
+message NodeProperties {
+    VendorTypeInfo vendorTypeInfo = 1;
+    uint32 index = 2;
+    Position position = 3;
+    map<string, string> tag = 4;
+}
+
+message VendorTypeInfo {
+    VendorType vendorType = 1;
+    string platform = 2;
+    Position position = 3;
+    map<string, string> tag = 4;
+
+}
+
+enum VendorType {
+    VendorType_Unknown = 0;
+    VendorType_Nokia_Srl = 1;
+    VendorType_Nokia_Sros = 2;
+}
+
+enum Position {
+    Position_Unknown = 0;
+    Position_Leaf = 1;
+    Position_Spine = 2;
+    Position_Superspine =3;
+    Position_Dcgw =4;
+    Position_Wan = 5;
+    Position_Cpe = 6;
+    Position_Server = 7;
+    Position_Infra = 8;
+}

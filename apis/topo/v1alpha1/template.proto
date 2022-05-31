@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package topo.v1alpha1;
+
+option go_package = "github.com/yndd/topology/apis/topo/v1alpha1";
+
+message TemplateSpec {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceSpec managed = 1;
+    TemplateProperties properties = 2;
+}
+
+message TemplateStatus {
+    //github.com.yndd.ndd_runtime.apis.common.v1.ResourceStatus managed = 1;
+}
+
+message TemplateProperties {
+}

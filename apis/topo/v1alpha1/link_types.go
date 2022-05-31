@@ -22,51 +22,70 @@ import (
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	//targetv1alpha1pb "github.com/yndd/topology/gen/go/apis/topo/v1alpha1"
 )
 
-// TopologyLinkProperties struct
-type TopologyLinkProperties struct {
-	// +kubebuilder:validation:Enum=`disable`;`enable`
-	// +kubebuilder:default:="enable"
-	AdminState *string `json:"admin-state,omitempty"`
-	// kubebuilder:validation:MinLength=1
-	// kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern="[A-Za-z0-9 !@#$^&()|+=`~.,'/_:;?-]*"
-	Description *string                  `json:"description,omitempty"`
-	Endpoints   []*TopologyLinkEndpoints `json:"endpoints,omitempty"`
-	Name        *string                  `json:"name,omitempty"`
-	Tag         []*nddv1.Tag             `json:"tag,omitempty"`
+// TopologyLinkSpec struct
+type LinkSpec struct {
+	nddv1.ResourceSpec `json:",inline"`
+	// Properties define the properties of the Topology
+	Properties LinkProperties `json:"properties,omitempty"`
 }
 
-// TopologyLinkEndpoints struct
-type TopologyLinkEndpoints struct {
+// A LinkStatus represents the observed state of a Link.
+type LinkStatus struct {
+	nddv1.ResourceStatus `json:",inline"`
+}
+
+// LinkProperties struct
+type LinkProperties struct {
+	Endpoints []*Endpoints       `json:"endpoints,omitempty"`
+	LagMember bool               `json:"lagMember,omitempty"`
+	Lacp      bool               `json:"lacp,omitempty"`
+	Kind      LinkKindProperties `json:"kind,omitempty"`
+	Tag       map[string]string  `json:"tag,omitempty"`
+}
+
+// LinkEndpoints struct
+type Endpoints struct {
 	// kubebuilder:validation:MinLength=3
 	// kubebuilder:validation:MaxLength=20
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern=`int-([1-9](\d){0,1}(/[abcd])?(/[1-9](\d){0,1})?/(([1-9](\d){0,1})|(1[0-1]\d)|(12[0-8])))|`
-	InterfaceName *string      `json:"interface-name"`
-	NodeName      *string      `json:"node-name"`
-	Tag           []*nddv1.Tag `json:"tag,omitempty"`
+	InterfaceName   string                 `json:"interfaceName"`
+	NodeName        string                 `json:"nodeName"`
+	Kind            EndpointKindProperties `json:"kind,omitempty"`
+	LacpFallback    bool                   `json:"lacpFallback,omitempty"`
+	LagName         string                 `json:"lagName,omitempty"`
+	EndpointGroup   string                 `json:"endpointGroup,omitempty"`
+	MultiHoming     bool                   `json:"multiHoming,omitempty"`
+	MultiHomingName string                 `json:"multiHomingName,omitempty"`
+	Tag             map[string]string      `json:"tag,omitempty"`
 }
 
-// TopologyLinkSpec struct
-type TopologyLinkSpec struct {
-	nddv1.ResourceSpec `json:",inline"`
-	// Properties define the properties of the Topology
-	Properties TopologyLinkProperties `json:"properties,omitempty"`
-}
+type LinkKindProperties string
 
-// A TopologyLinkStatus represents the observed state of a TopologyLink.
-type TopologyLinkStatus struct {
-	nddv1.ResourceStatus `json:",inline"`
-	//TopologyName            *string               `json:"topology-name,omitempty"`
-	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
-}
+// LinkPropertiesKind enums.
+const (
+	LinkKindUnknown LinkKindProperties = "unknown"
+	LinkKindInfra   LinkKindProperties = "infra"
+	LinkKindLoop    LinkKindProperties = "loop"
+)
+
+type EndpointKindProperties string
+
+// LinkPropertiesKind enums.
+const (
+	EndpointKindUnknown  EndpointKindProperties = "unknown"
+	EndpointKindInfra    EndpointKindProperties = "infra"
+	EndpointKindLoop     EndpointKindProperties = "loop"
+	EndpointKindExternal EndpointKindProperties = "external"
+	EndpointKindOob      EndpointKindProperties = "oob"
+)
 
 // +kubebuilder:object:root=true
 
-// TopoTopologyLink is the Schema for the TopologyLink API
+// Link is the Schema for the Link API
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
@@ -84,31 +103,31 @@ type TopologyLinkStatus struct {
 // +kubebuilder:printcolumn:name="MH-EPB",type="string",JSONPath=".spec.link.endpoints[1].tag[?(@.key=='multihoming')].value"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
-type TopologyLink struct {
+type Link struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopologyLinkSpec   `json:"spec,omitempty"`
-	Status TopologyLinkStatus `json:"status,omitempty"`
+	Spec   LinkSpec   `json:"spec,omitempty"`
+	Status LinkStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// TopoTopologyLinkList contains a list of TopologyLinks
-type TopologyLinkList struct {
+// LinkList contains a list of Links
+type LinkList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TopologyLink `json:"items"`
+	Items           []Link `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&TopologyLink{}, &TopologyLinkList{})
+	SchemeBuilder.Register(&Link{}, &LinkList{})
 }
 
-// TopologyLink type metadata.
+// Link type metadata.
 var (
-	TopologyLinkKind             = reflect.TypeOf(TopologyLink{}).Name()
-	TopologyLinkGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyLinkKind}.String()
-	TopologyLinkKindAPIVersion   = TopologyLinkKind + "." + GroupVersion.String()
-	TopologyLinkGroupVersionKind = GroupVersion.WithKind(TopologyLinkKind)
+	LinkKind             = reflect.TypeOf(Link{}).Name()
+	LinkGroupKind        = schema.GroupKind{Group: Group, Kind: LinkKind}.String()
+	LinkKindAPIVersion   = LinkKind + "." + GroupVersion.String()
+	LinkGroupVersionKind = GroupVersion.WithKind(LinkKind)
 )

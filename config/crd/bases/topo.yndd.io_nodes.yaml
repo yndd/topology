@@ -5,17 +5,17 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: topologytemplates.topo.yndd.io
+  name: nodes.topo.yndd.io
 spec:
   group: topo.yndd.io
   names:
     categories:
     - yndd
     - topo
-    kind: TopologyTemplate
-    listKind: TopologyTemplateList
-    plural: topologytemplates
-    singular: topologytemplate
+    kind: Node
+    listKind: NodeList
+    plural: nodes
+    singular: node
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -37,13 +37,19 @@ spec:
     - jsonPath: .status.topology-name
       name: TOPO
       type: string
+    - jsonPath: .spec.node.kind-name
+      name: KIND
+      type: string
+    - jsonPath: .status.node.state.tag[?(@.key=='platform')].value
+      name: PLATFORM
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TopologyTemplate is the Schema for the TopologyTemplate API
+        description: Node is the Schema for the Node API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -58,7 +64,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TopologyTemplateSpec struct
+            description: NodeSpec struct
             properties:
               lifecycle:
                 description: Lifecycle determines the deletion and deployment lifecycle
@@ -83,7 +89,20 @@ spec:
                     type: string
                 type: object
               properties:
-                description: Properties define the properties of the TopologyTemplate
+                description: Properties define the properties of the Topology
+                properties:
+                  endpoints:
+                    type: string
+                  expectedSwVersion:
+                    type: string
+                  macAddress:
+                    type: string
+                  platform:
+                    type: string
+                  position:
+                    type: string
+                  serialNumber:
+                    type: string
                 type: object
               targetRef:
                 description: TargetReference specifies which target will be used to
@@ -97,8 +116,7 @@ spec:
                 type: object
             type: object
           status:
-            description: A TopologyTemplateStatus represents the observed state of
-              a TopologyTemplate.
+            description: A NodeStatus represents the observed state of a node.
             properties:
               conditions:
                 description: Conditions of the resource.
@@ -182,14 +200,10 @@ spec:
                     type: integer
                 type: object
               oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
+                additionalProperties:
+                  type: string
+                description: Oda []Tag `json:"oda,omitempty"`
+                type: object
               rootPaths:
                 description: rootPaths define the rootPaths of the cr, used to monitor
                   the resource status

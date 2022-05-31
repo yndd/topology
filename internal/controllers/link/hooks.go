@@ -38,22 +38,22 @@ const (
 // A Hooks performs operations to desploy/destroy .
 type Hooks interface {
 	// Get performs operations to validate the child resources
-	Get(context.Context, topov1alpha1.Tl, string) (*topov1alpha1.TopologyLink, error)
+	Get(context.Context, *topov1alpha1.Link, string) (*topov1alpha1.Link, error)
 
 	// Create performs operations to deploy the child resources
-	Create(context.Context, topov1alpha1.Tl, string) error
+	Create(context.Context, *topov1alpha1.Link, string) error
 
 	// Delete performs operations to deploy the child resources
-	Delete(context.Context, topov1alpha1.Tl) error
+	Delete(context.Context, *topov1alpha1.Link) error
 
 	// apply performs operations to update the resource
-	Apply(context.Context, topov1alpha1.Tl, *topov1alpha1.TopologyLink) error
+	Apply(context.Context, *topov1alpha1.Link, *topov1alpha1.Link) error
 
 	// apply performs operations to update the resource
-	DeleteApply(context.Context, topov1alpha1.Tl, *topov1alpha1.TopologyLink) error
+	DeleteApply(context.Context, *topov1alpha1.Link, *topov1alpha1.Link) error
 
 	// deletes the node/interfacename from the endpoint tags
-	DeleteApplyNode(context.Context, topov1alpha1.Tl, int, string, string) error
+	DeleteApplyNode(context.Context, *topov1alpha1.Link, int, string, string) error
 }
 
 // DeviceDriverHooks performs operations to deploy the device driver.
@@ -69,7 +69,7 @@ func NewHook(client resource.ClientApplicator, log logging.Logger) Hooks {
 	}
 }
 
-func (h *Hook) Get(ctx context.Context, cr topov1alpha1.Tl, topologyName string) (*topov1alpha1.TopologyLink, error) {
+func (h *Hook) Get(ctx context.Context, cr *topov1alpha1.Link, topologyName string) (*topov1alpha1.Link, error) {
 	link := buildLogicalTopologyLink(cr)
 	h.log.Debug("hook get", "logical link name", link.GetName())
 	if err := h.client.Get(ctx, types.NamespacedName{Namespace: cr.GetNamespace(), Name: link.GetName()}, link); err != nil {
@@ -78,7 +78,7 @@ func (h *Hook) Get(ctx context.Context, cr topov1alpha1.Tl, topologyName string)
 	return link, nil
 }
 
-func (h *Hook) Create(ctx context.Context, cr topov1alpha1.Tl, topologyName string) error {
+func (h *Hook) Create(ctx context.Context, cr *topov1alpha1.Link, topologyName string) error {
 	link := buildLogicalTopologyLink(cr)
 	if err := h.client.Apply(ctx, link); err != nil {
 		return errors.Wrap(err, errApplyLink)
@@ -86,7 +86,7 @@ func (h *Hook) Create(ctx context.Context, cr topov1alpha1.Tl, topologyName stri
 	return nil
 }
 
-func (h *Hook) Delete(ctx context.Context, cr topov1alpha1.Tl) error {
+func (h *Hook) Delete(ctx context.Context, cr *topov1alpha1.Link) error {
 	if err := h.client.Delete(ctx, cr); err != nil {
 		return errors.Wrap(err, errDeleteLink)
 	}
@@ -94,7 +94,7 @@ func (h *Hook) Delete(ctx context.Context, cr topov1alpha1.Tl) error {
 	return nil
 }
 
-func (h *Hook) Apply(ctx context.Context, cr topov1alpha1.Tl, mhtl *topov1alpha1.TopologyLink) error {
+func (h *Hook) Apply(ctx context.Context, cr *topov1alpha1.Link, mhtl *topov1alpha1.Link) error {
 	tl := updateLogicalTopologyLink(cr, mhtl)
 	if err := h.client.Apply(ctx, tl); err != nil {
 		return errors.Wrap(err, errDeleteLink)
@@ -103,7 +103,7 @@ func (h *Hook) Apply(ctx context.Context, cr topov1alpha1.Tl, mhtl *topov1alpha1
 	return nil
 }
 
-func (h *Hook) DeleteApply(ctx context.Context, cr topov1alpha1.Tl, mhtl *topov1alpha1.TopologyLink) error {
+func (h *Hook) DeleteApply(ctx context.Context, cr *topov1alpha1.Link, mhtl *topov1alpha1.Link) error {
 	tl := updateDeleteLogicalTopologyLink(cr, mhtl)
 	if err := h.client.Apply(ctx, tl); err != nil {
 		return errors.Wrap(err, errDeleteLink)
@@ -112,7 +112,7 @@ func (h *Hook) DeleteApply(ctx context.Context, cr topov1alpha1.Tl, mhtl *topov1
 	return nil
 }
 
-func (h *Hook) DeleteApplyNode(ctx context.Context, cr topov1alpha1.Tl, i int, nodeName, interfaceName string) error {
+func (h *Hook) DeleteApplyNode(ctx context.Context, cr *topov1alpha1.Link, i int, nodeName, interfaceName string) error {
 	tl := updateDeleteLogicalTopologyLinkNodeEndpoint(cr, i, nodeName, interfaceName)
 	if err := h.client.Apply(ctx, tl); err != nil {
 		return errors.Wrap(err, errDeleteLink)

@@ -39,7 +39,7 @@ type EnqueueRequestForAllTopologyLinks struct {
 
 	handler handler.Handler
 
-	newTopoNodeList func() topov1alpha1.TnList
+	//newTopoNodeList func() topov1alpha1.TnList
 }
 
 // Create enqueues a request for all infrastructures which pertains to the topology.
@@ -71,20 +71,21 @@ func (e *EnqueueRequestForAllTopologyLinks) add(obj runtime.Object, queue adder)
 	log := e.log.WithValues("function", "watch topology nodes", "name", dd.GetName())
 	log.Debug("topologylink handleEvent")
 
-	d := e.newTopoNodeList()
+	//d := e.newTopoNodeList()
+	d := &topov1alpha1.NodeList{}
 	if err := e.client.List(e.ctx, d); err != nil {
 		return
 	}
 
 	watchDnsName, _ := odns.Name2OdnsTopoResource(dd.GetName()).GetFullOdaName()
 
-	for _, toponode := range d.GetNodes() {
+	for _, toponode := range d.Items {
 		// only enqueue if the topology name match
 		//if toponode.GetTopologyName() == dd.GetName() {
 		nodeDnsName, _ := odns.Name2OdnsTopo(toponode.GetName()).GetFullOdaName()
 		if nodeDnsName == watchDnsName {
 
-			crName := getCrName(toponode)
+			crName := getCrName(&toponode)
 			e.handler.ResetSpeedy(crName)
 
 			queue.Add(reconcile.Request{NamespacedName: types.NamespacedName{

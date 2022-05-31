@@ -48,7 +48,7 @@ const (
 
 // Setup adds a controller that reconciles infra.
 func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
-	name := strings.Join([]string{topov1alpha1.Group, strings.ToLower(topov1alpha1.TopologyDefinitionKind)}, "/")
+	name := strings.Join([]string{topov1alpha1.Group, strings.ToLower(topov1alpha1.DefinitionKind)}, "/")
 	//tlfn := func() topov1alpha1.Tl { return &topov1alpha1.TopologyLink{} }
 	//tllfn := func() topov1alpha1.TlList { return &topov1alpha1.TopologyLinkList{} }
 	//tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
@@ -59,7 +59,7 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 		Applicator: resource.NewAPIPatchingApplicator(mgr.GetClient()),
 	}
 
-	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.TopologyDefinitionGroupVersionKind),
+	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
 		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
 		managed.WithApplogic(&applogic{
 			log:           nddcopts.Logger.WithValues("applogic", name),
@@ -79,8 +79,8 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(nddcopts.Copts).
-		For(&topov1alpha1.TopologyDefinition{}).
-		Owns(&topov1alpha1.TopologyDefinition{}).
+		For(&topov1alpha1.Definition{}).
+		Owns(&topov1alpha1.Definition{}).
 		WithEventFilter(resource.IgnoreUpdateWithoutGenerationChangePredicate()).
 		Watches(&source.Kind{Type: &targetv1.Target{}}, targetHandler).
 		Complete(r)
@@ -125,7 +125,7 @@ func (r *applogic) FinalDelete(ctx context.Context, mr resource.Managed) {
 
 func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) error {
 	// cast the type to the real object/resource we expect
-	cr, ok := mr.(*topov1alpha1.TopologyDefinition)
+	cr, ok := mr.(*topov1alpha1.Definition)
 	if !ok {
 		return errors.New(errUnexpectedResource)
 	}
@@ -145,9 +145,10 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
+		namespace, name := GetNameAndNamespace(dr.NamespacedName)
 		opts := []client.ListOption{
-			client.MatchingLabels{LabelKeyDiscoveryRule: dr.Name},
-			client.InNamespace(cr.GetNamespace()),
+			client.MatchingLabels{LabelKeyDiscoveryRule: name},
+			client.InNamespace(namespace),
 		}
 		// get targets in the namespace based on the discovery rule
 		tl := r.newTargetList()
@@ -168,7 +169,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 				n.Platform = *t.GetDiscoveryInfo().Kind
 			*/
 
-			n := renderNode(dr.Name, cr, t)
+			n := renderNode(dr.NamespacedName, cr, t)
 			if err := r.client.Apply(ctx, n); err != nil {
 				return err
 			}

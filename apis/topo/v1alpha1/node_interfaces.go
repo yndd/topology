@@ -17,16 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"reflect"
-	"strconv"
-
 	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
-	"github.com/yndd/ndd-runtime/pkg/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ TnList = &TopologyNodeList{}
+/*
+var _ TnList = &NodeList{}
 
 // +k8s:deepcopy-gen=false
 type TnList interface {
@@ -35,7 +31,7 @@ type TnList interface {
 	GetNodes() []Tn
 }
 
-func (x *TopologyNodeList) GetNodes() []Tn {
+func (x *NodeList) GetNodes() []Tn {
 	xs := make([]Tn, len(x.Items))
 	for i, r := range x.Items {
 		r := r // Pin range variable so we can take its address.
@@ -44,7 +40,7 @@ func (x *TopologyNodeList) GetNodes() []Tn {
 	return xs
 }
 
-var _ Tn = &TopologyNode{}
+var _ Tn = &Node{}
 
 // +k8s:deepcopy-gen=false
 type Tn interface {
@@ -87,101 +83,104 @@ type Tn interface {
 	//SetPlatform(string)
 	//SetPosition(string)
 	//SetNodeEndpoint(ep *NddrTopologyTopologyLinkStateNodeEndpoint)
-	//GetNodeEndpoints() []*NddrTopologyTopologyNodeStateEndpoint
+	//GetNodeEndpoints() []*NddrTopologyNodeStateEndpoint
 	SetOrganization(s string)
 	SetDeployment(s string)
 	SetAvailabilityZone(s string)
 	//SetTopologyName(string)
 }
+*/
 
 // GetCondition of this Network Node.
-func (x *TopologyNode) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
+func (x *Node) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
 	return x.Status.GetCondition(ct)
 }
 
 // SetConditions of the Network Node.
-func (x *TopologyNode) SetConditions(c ...nddv1.Condition) {
+func (x *Node) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
 }
 
-func (x *TopologyNode) SetHealthConditions(c nddv1.HealthConditionedStatus) {
+func (x *Node) SetHealthConditions(c nddv1.HealthConditionedStatus) {
 	x.Status.Health = c
 }
 
-func (x *TopologyNode) GetDeletionPolicy() nddv1.DeletionPolicy {
+func (x *Node) GetDeletionPolicy() nddv1.DeletionPolicy {
 	return x.Spec.Lifecycle.DeletionPolicy
 }
 
-func (x *TopologyNode) SetDeletionPolicy(c nddv1.DeletionPolicy) {
+func (x *Node) SetDeletionPolicy(c nddv1.DeletionPolicy) {
 	x.Spec.Lifecycle.DeletionPolicy = c
 }
 
-func (x *TopologyNode) GetDeploymentPolicy() nddv1.DeploymentPolicy {
+func (x *Node) GetDeploymentPolicy() nddv1.DeploymentPolicy {
 	return x.Spec.Lifecycle.DeploymentPolicy
 }
 
-func (x *TopologyNode) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
+func (x *Node) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
 	x.Spec.Lifecycle.DeploymentPolicy = c
 }
 
-func (x *TopologyNode) GetTargetReference() *nddv1.Reference {
+func (x *Node) GetTargetReference() *nddv1.Reference {
 	return x.Spec.TargetReference
 }
 
-func (x *TopologyNode) SetTargetReference(p *nddv1.Reference) {
+func (x *Node) SetTargetReference(p *nddv1.Reference) {
 	x.Spec.TargetReference = p
 }
 
-func (x *TopologyNode) GetRootPaths() []string {
+func (x *Node) GetRootPaths() []string {
 	return x.Status.RootPaths
 }
 
-func (x *TopologyNode) SetRootPaths(rootPaths []string) {
+func (x *Node) SetRootPaths(rootPaths []string) {
 	x.Status.RootPaths = rootPaths
 }
 
-func (x *TopologyNode) GetOrganization() string {
+func (x *Node) GetOrganization() string {
 	return odns.Name2OdnsTopoResource(x.GetName()).GetOrganization()
 }
 
-func (x *TopologyNode) GetDeployment() string {
+func (x *Node) GetDeployment() string {
 	return odns.Name2OdnsTopoResource(x.GetName()).GetDeployment()
 }
 
-func (x *TopologyNode) GetAvailabilityZone() string {
+func (x *Node) GetAvailabilityZone() string {
 	return odns.Name2OdnsTopoResource(x.GetName()).GetAvailabilityZone()
 }
 
-func (x *TopologyNode) GetTopologyName() string {
+func (x *Node) GetTopologyName() string {
 	return odns.Name2OdnsTopoResource(x.GetName()).GetTopologyName()
 }
 
-func (x *TopologyNode) GetNodeName() string {
+/*
+
+func (x *Node) GetNodeName() string {
 	return odns.Name2OdnsTopoResource(x.GetName()).GetResourceName()
 }
 
-func (x *TopologyNode) GetVendorType() string {
+func (x *Node) GetVendorType() string {
 	if reflect.ValueOf(x.Spec.Properties.VendorType).IsZero() {
 		return ""
 	}
 	return x.Spec.Properties.VendorType
 }
 
-func (x *TopologyNode) GetAdminState() string {
+func (x *Node) GetAdminState() string {
 	if reflect.ValueOf(x.Spec.Properties.AdminState).IsZero() {
 		return ""
 	}
 	return x.Spec.Properties.AdminState
 }
 
-func (x *TopologyNode) GetDescription() string {
+func (x *Node) GetDescription() string {
 	if reflect.ValueOf(x.Spec.Properties.Description).IsZero() {
 		return ""
 	}
 	return x.Spec.Properties.Description
 }
 
-func (x *TopologyNode) GetTags() map[string]string {
+func (x *Node) GetTags() map[string]string {
 	s := make(map[string]string)
 	if reflect.ValueOf(x.Spec.Properties.Tag).IsZero() {
 		return s
@@ -192,14 +191,14 @@ func (x *TopologyNode) GetTags() map[string]string {
 	return s
 }
 
-func (x *TopologyNode) GetPosition() string {
+func (x *Node) GetPosition() string {
 	if t, ok := x.GetTags()[KeyNodePosition]; ok {
 		return t
 	}
 	return ""
 }
 
-func (x *TopologyNode) GetNodeIndex() uint32 {
+func (x *Node) GetNodeIndex() uint32 {
 	if t, ok := x.GetTags()[KeyNodeIndex]; ok {
 		if i, err := strconv.Atoi(t); err == nil {
 			return uint32(i)
@@ -209,18 +208,19 @@ func (x *TopologyNode) GetNodeIndex() uint32 {
 	return MaxUint32
 }
 
-func (x *TopologyNode) InitializeResource() error {
+func (x *Node) InitializeResource() error {
 	return nil
 }
 
-func (x *TopologyNode) SetOrganization(s string) {
+func (x *Node) SetOrganization(s string) {
 	x.Status.SetOrganization(s)
 }
 
-func (x *TopologyNode) SetDeployment(s string) {
+func (x *Node) SetDeployment(s string) {
 	x.Status.SetDeployment(s)
 }
 
-func (x *TopologyNode) SetAvailabilityZone(s string) {
+func (x *Node) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
 }
+*/

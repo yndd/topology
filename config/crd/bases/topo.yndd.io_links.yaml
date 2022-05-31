@@ -1,21 +1,21 @@
-
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: topologydefinitions.topo.yndd.io
+  name: links.topo.yndd.io
 spec:
   group: topo.yndd.io
   names:
     categories:
     - yndd
     - topo
-    kind: TopologyDefinition
-    listKind: TopologyDefinitionList
-    plural: topologydefinitions
-    singular: topologydefinition
+    kind: Link
+    listKind: LinkList
+    plural: links
+    singular: link
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -37,13 +37,37 @@ spec:
     - jsonPath: .status.topology-name
       name: TOPO
       type: string
+    - jsonPath: .spec.link.tag[?(@.key=='lag')].value
+      name: LAG
+      type: string
+    - jsonPath: .spec.link.tag[?(@.key=='lag-member')].value
+      name: MEMBER
+      type: string
+    - jsonPath: .spec.link.endpoints[0].node-name
+      name: NODE-EPA
+      type: string
+    - jsonPath: .spec.link.endpoints[0].interface-name
+      name: ITFCE-EPA
+      type: string
+    - jsonPath: .spec.link.endpoints[0].tag[?(@.key=='multihoming')].value
+      name: MH-EPA
+      type: string
+    - jsonPath: .spec.link.endpoints[1].node-name
+      name: NODE-EPB
+      type: string
+    - jsonPath: .spec.link.endpoints[1].interface-name
+      name: ITFCE-EPB
+      type: string
+    - jsonPath: .spec.link.endpoints[1].tag[?(@.key=='multihoming')].value
+      name: MH-EPB
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TopologyDefinition is the Schema for the Topology API
+        description: Link is the Schema for the Link API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -58,7 +82,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TopologyDefinitionSpec struct
+            description: TopologyLinkSpec struct
             properties:
               lifecycle:
                 description: Lifecycle determines the deletion and deployment lifecycle
@@ -83,32 +107,49 @@ spec:
                     type: string
                 type: object
               properties:
-                description: Properties define the properties of the TopologyDefinition
+                description: Properties define the properties of the Topology
                 properties:
-                  discovery-rules:
+                  endpoints:
                     items:
+                      description: LinkEndpoints struct
                       properties:
-                        digital-twin:
-                          default: false
-                          type: boolean
-                        name:
+                        endpointGroup:
                           type: string
+                        interfaceName:
+                          description: kubebuilder:validation:MinLength=3 kubebuilder:validation:MaxLength=20
+                          pattern: int-([1-9](\d){0,1}(/[abcd])?(/[1-9](\d){0,1})?/(([1-9](\d){0,1})|(1[0-1]\d)|(12[0-8])))|
+                          type: string
+                        kind:
+                          type: string
+                        lacpFallback:
+                          type: boolean
+                        lagName:
+                          type: string
+                        multiHoming:
+                          type: boolean
+                        multiHomingName:
+                          type: string
+                        nodeName:
+                          type: string
+                        tag:
+                          additionalProperties:
+                            type: string
+                          type: object
                       required:
-                      - name
+                      - interfaceName
+                      - nodeName
                       type: object
                     type: array
-                  templates:
-                    items:
-                      properties:
-                        digital-twin:
-                          default: false
-                          type: boolean
-                        name:
-                          type: string
-                      required:
-                      - name
-                      type: object
-                    type: array
+                  kind:
+                    type: string
+                  lacp:
+                    type: boolean
+                  lagMember:
+                    type: boolean
+                  tag:
+                    additionalProperties:
+                      type: string
+                    type: object
                 type: object
               targetRef:
                 description: TargetReference specifies which target will be used to
@@ -122,8 +163,7 @@ spec:
                 type: object
             type: object
           status:
-            description: A TopologyDefinitionStatus represents the observed state
-              of a TopologyDefinition.
+            description: A LinkStatus represents the observed state of a Link.
             properties:
               conditions:
                 description: Conditions of the resource.
@@ -207,14 +247,10 @@ spec:
                     type: integer
                 type: object
               oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
+                additionalProperties:
+                  type: string
+                description: Oda []Tag `json:"oda,omitempty"`
+                type: object
               rootPaths:
                 description: rootPaths define the rootPaths of the cr, used to monitor
                   the resource status

@@ -20,20 +20,21 @@ import (
 	"strings"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
-	"github.com/yndd/ndd-runtime/pkg/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	//"github.com/yndd/ndd_runtime/pkg/resource"
+	//"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ TdList = &TopologyDefinitionList{}
+/*
+var _ TdList = &DefinitionList{}
 
 // +k8s:deepcopy-gen=false
 type TdList interface {
 	client.ObjectList
 
-	GetTopologyDefinitions() []Td
+	GetDefinitions() []Td
 }
 
-func (x *TopologyDefinitionList) GetTopologyDefinitions() []Td {
+func (x *DefinitionList) GetDefinitions() []Td {
 	xs := make([]Td, len(x.Items))
 	for i, r := range x.Items {
 		r := r // Pin range variable so we can take its address.
@@ -42,7 +43,7 @@ func (x *TopologyDefinitionList) GetTopologyDefinitions() []Td {
 	return xs
 }
 
-var _ Td = &TopologyDefinition{}
+var _ Td = &Definition{}
 
 // +k8s:deepcopy-gen=false
 type Td interface {
@@ -67,53 +68,53 @@ type Td interface {
 
 	GetNamespacedName() string
 }
-
+*/
 // GetCondition of this Network Node.
-func (x *TopologyDefinition) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
+func (x *Definition) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
 	return x.Status.GetCondition(ct)
 }
 
 // SetConditions of the Network Node.
-func (x *TopologyDefinition) SetConditions(c ...nddv1.Condition) {
+func (x *Definition) SetConditions(c ...nddv1.Condition) {
 	x.Status.SetConditions(c...)
 }
 
-func (x *TopologyDefinition) SetHealthConditions(c nddv1.HealthConditionedStatus) {
+func (x *Definition) SetHealthConditions(c nddv1.HealthConditionedStatus) {
 	x.Status.Health = c
 }
 
-func (x *TopologyDefinition) GetDeletionPolicy() nddv1.DeletionPolicy {
+func (x *Definition) GetDeletionPolicy() nddv1.DeletionPolicy {
 	return x.Spec.Lifecycle.DeletionPolicy
 }
 
-func (x *TopologyDefinition) SetDeletionPolicy(c nddv1.DeletionPolicy) {
+func (x *Definition) SetDeletionPolicy(c nddv1.DeletionPolicy) {
 	x.Spec.Lifecycle.DeletionPolicy = c
 }
 
-func (x *TopologyDefinition) GetDeploymentPolicy() nddv1.DeploymentPolicy {
+func (x *Definition) GetDeploymentPolicy() nddv1.DeploymentPolicy {
 	return x.Spec.Lifecycle.DeploymentPolicy
 }
 
-func (x *TopologyDefinition) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
+func (x *Definition) SetDeploymentPolicy(c nddv1.DeploymentPolicy) {
 	x.Spec.Lifecycle.DeploymentPolicy = c
 }
 
-func (x *TopologyDefinition) GetTargetReference() *nddv1.Reference {
+func (x *Definition) GetTargetReference() *nddv1.Reference {
 	return x.Spec.TargetReference
 }
 
-func (x *TopologyDefinition) SetTargetReference(p *nddv1.Reference) {
+func (x *Definition) SetTargetReference(p *nddv1.Reference) {
 	x.Spec.TargetReference = p
 }
 
-func (x *TopologyDefinition) GetRootPaths() []string {
+func (x *Definition) GetRootPaths() []string {
 	return x.Status.RootPaths
 }
 
-func (x *TopologyDefinition) SetRootPaths(rootPaths []string) {
+func (x *Definition) SetRootPaths(rootPaths []string) {
 	x.Status.RootPaths = rootPaths
 }
 
-func (x *TopologyDefinition) GetNamespacedName() string {
+func (x *Definition) GetNamespacedName() string {
 	return strings.Join([]string{x.Namespace, x.Name}, "/")
 }

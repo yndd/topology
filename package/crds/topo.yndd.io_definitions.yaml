@@ -5,17 +5,17 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: topologydefinitions.topo.yndd.io
+  name: definitions.topo.yndd.io
 spec:
   group: topo.yndd.io
   names:
     categories:
     - yndd
     - topo
-    kind: TopologyDefinition
-    listKind: TopologyDefinitionList
-    plural: topologydefinitions
-    singular: topologydefinition
+    kind: Definition
+    listKind: DefinitionList
+    plural: definitions
+    singular: definition
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -43,7 +43,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TopologyDefinition is the Schema for the Topology API
+        description: Definition is the Schema for the Topology API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -58,7 +58,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TopologyDefinitionSpec struct
+            description: DefinitionSpec struct
             properties:
               lifecycle:
                 description: Lifecycle determines the deletion and deployment lifecycle
@@ -83,30 +83,30 @@ spec:
                     type: string
                 type: object
               properties:
-                description: Properties define the properties of the TopologyDefinition
+                description: Properties define the properties of the Definition
                 properties:
-                  discovery-rules:
+                  discoveryRules:
                     items:
                       properties:
-                        digital-twin:
+                        digitalTwin:
                           default: false
                           type: boolean
-                        name:
+                        namespacedName:
                           type: string
                       required:
-                      - name
+                      - namespacedName
                       type: object
                     type: array
                   templates:
                     items:
                       properties:
-                        digital-twin:
+                        digitalTwin:
                           default: false
                           type: boolean
-                        name:
+                        namespacedName:
                           type: string
                       required:
-                      - name
+                      - namespacedName
                       type: object
                     type: array
                 type: object
@@ -122,8 +122,7 @@ spec:
                 type: object
             type: object
           status:
-            description: A TopologyDefinitionStatus represents the observed state
-              of a TopologyDefinition.
+            description: A DefinitionStatus represents the observed state of a Definition.
             properties:
               conditions:
                 description: Conditions of the resource.
@@ -207,14 +206,10 @@ spec:
                     type: integer
                 type: object
               oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
+                additionalProperties:
+                  type: string
+                description: Oda []Tag `json:"oda,omitempty"`
+                type: object
               rootPaths:
                 description: rootPaths define the rootPaths of the cr, used to monitor
                   the resource status

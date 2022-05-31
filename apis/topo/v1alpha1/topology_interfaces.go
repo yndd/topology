@@ -17,14 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"reflect"
-
 	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
-	"github.com/yndd/ndd-runtime/pkg/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+/*
 var _ TpList = &TopologyList{}
 
 // +k8s:deepcopy-gen=false
@@ -84,7 +81,7 @@ type Tp interface {
 	SetDeployment(s string)
 	SetAvailabilityZone(s string)
 }
-
+*/
 // GetCondition of this Network Node.
 func (x *Topology) GetCondition(ct nddv1.ConditionKind) nddv1.Condition {
 	return x.Status.GetCondition(ct)
@@ -147,19 +144,7 @@ func (x *Topology) GetTopologyName() string {
 	return odns.Name2OdnsTopo(x.GetName()).GetTopologyName()
 }
 
-func (x *Topology) GetAdminState() string {
-	if reflect.ValueOf(x.Spec.Properties.AdminState).IsZero() {
-		return ""
-	}
-	return x.Spec.Properties.AdminState
-}
-
-func (x *Topology) GetDescription() string {
-	if reflect.ValueOf(x.Spec.Properties.Description).IsZero() {
-		return ""
-	}
-	return x.Spec.Properties.Description
-}
+/*
 
 func (x *Topology) GetDefaultsTags() map[string]string {
 	s := make(map[string]string)
@@ -240,3 +225,4 @@ func (x *Topology) SetDeployment(s string) {
 func (x *Topology) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
 }
+*/

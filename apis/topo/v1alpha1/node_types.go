@@ -24,40 +24,55 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// TopologyNodeSpec struct
-type TopologyNodeProperties struct {
-	// +kubebuilder:validation:Enum=`disable`;`enable`
-	// +kubebuilder:default:="enable"
-	AdminState string `json:"admin-state,omitempty"`
-	// kubebuilder:validation:MinLength=1
-	// kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern="[A-Za-z0-9 !@#$^&()|+=`~.,'/_:;?-]*"
-	Description string       `json:"description,omitempty"`
-	VendorType  string       `json:"vendor-type,omitempty"`
-	Index       uint32       `json:"index,omitempty"`
-	Position    string       `json:"position,omitempty"`
-	Platform    string       `json:"platform,omitempty"`
-	Tag         []*nddv1.Tag `json:"tag,omitempty"`
-}
-
-// TopologyLinkSpec struct
-type TopologyNodeSpec struct {
+// NodeSpec struct
+type NodeSpec struct {
 	nddv1.ResourceSpec `json:",inline"`
-	// Properties define the properties of the TopologyNode
-	Properties *TopologyNodeProperties `json:"properties,omitempty"`
+	// Properties define the properties of the Topology
+	Properties *NodeProperties `json:"properties,omitempty"`
 }
 
-// A TopologyNodeStatus represents the observed state of a TopologyNode.
-type TopologyNodeStatus struct {
+// A NodeStatus represents the observed state of a node.
+type NodeStatus struct {
 	nddv1.ResourceStatus `json:",inline"`
-	//TopologyName            *string               `json:"topology-name,omitempty"`
-	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
 }
+
+// NodeProperties struct
+type NodeProperties struct {
+	VendorType        VendorType `json:"endpoints,omitempty"`
+	Platform          string     `json:"platform,omitempty"`
+	Position          Position   `json:"position,omitempty"`
+	MacAddress        string     `json:"macAddress,omitempty"`
+	SerialNumber      string     `json:"serialNumber,omitempty"`
+	ExpectedSWVersion string     `json:"expectedSwVersion,omitempty"`
+}
+
+type VendorType string
+
+// VendorType enum.
+const (
+	VendorTypeUnknown   Position = "unknown"
+	VendorTypeNokiaSRL  Position = "nokiaSRL"
+	VendorTypeNokiaSROS Position = "nokiaSROS"
+)
+
+type Position string
+
+// Position enums.
+const (
+	PositionUnknown    Position = "unknown"
+	PositionLeaf       Position = "leaf"
+	PositionSpine      Position = "spine"
+	PositionSuperspine Position = "superspine"
+	PositionDcgw       Position = "dcgw"
+	PositionWan        Position = "wan"
+	PositionCpe        Position = "cpe"
+	PositionServer     Position = "server"
+	PositionInfra      Position = "infra"
+)
 
 // +kubebuilder:object:root=true
 
-// TopoTopologyNode is the Schema for the TopologyNode API
+// Node is the Schema for the Node API
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
@@ -69,31 +84,31 @@ type TopologyNodeStatus struct {
 // +kubebuilder:printcolumn:name="PLATFORM",type="string",JSONPath=".status.node.state.tag[?(@.key=='platform')].value"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
-type TopologyNode struct {
+type Node struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopologyNodeSpec   `json:"spec,omitempty"`
-	Status TopologyNodeStatus `json:"status,omitempty"`
+	Spec   NodeSpec   `json:"spec,omitempty"`
+	Status NodeStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// TopoTopologyNodeList contains a list of TopologyNodes
-type TopologyNodeList struct {
+// NodeList contains a list of Nodes
+type NodeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TopologyNode `json:"items"`
+	Items           []Node `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&TopologyNode{}, &TopologyNodeList{})
+	SchemeBuilder.Register(&Node{}, &NodeList{})
 }
 
-// TopologyNode type metadata.
+// Node type metadata.
 var (
-	TopologyNodeKind             = reflect.TypeOf(TopologyNode{}).Name()
-	TopologyNodeGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyNodeKind}.String()
-	TopologyNodeKindAPIVersion   = TopologyNodeKind + "." + GroupVersion.String()
-	TopologyNodeGroupVersionKind = GroupVersion.WithKind(TopologyNodeKind)
+	NodeKind             = reflect.TypeOf(Node{}).Name()
+	NodeGroupKind        = schema.GroupKind{Group: Group, Kind: NodeKind}.String()
+	NodeKindAPIVersion   = NodeKind + "." + GroupVersion.String()
+	NodeGroupVersionKind = GroupVersion.WithKind(NodeKind)
 )

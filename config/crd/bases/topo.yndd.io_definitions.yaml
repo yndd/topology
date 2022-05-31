@@ -5,17 +5,17 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: topologylinks.topo.yndd.io
+  name: definitions.topo.yndd.io
 spec:
   group: topo.yndd.io
   names:
     categories:
     - yndd
     - topo
-    kind: TopologyLink
-    listKind: TopologyLinkList
-    plural: topologylinks
-    singular: topologylink
+    kind: Definition
+    listKind: DefinitionList
+    plural: definitions
+    singular: definition
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -37,37 +37,13 @@ spec:
     - jsonPath: .status.topology-name
       name: TOPO
       type: string
-    - jsonPath: .spec.link.tag[?(@.key=='lag')].value
-      name: LAG
-      type: string
-    - jsonPath: .spec.link.tag[?(@.key=='lag-member')].value
-      name: MEMBER
-      type: string
-    - jsonPath: .spec.link.endpoints[0].node-name
-      name: NODE-EPA
-      type: string
-    - jsonPath: .spec.link.endpoints[0].interface-name
-      name: ITFCE-EPA
-      type: string
-    - jsonPath: .spec.link.endpoints[0].tag[?(@.key=='multihoming')].value
-      name: MH-EPA
-      type: string
-    - jsonPath: .spec.link.endpoints[1].node-name
-      name: NODE-EPB
-      type: string
-    - jsonPath: .spec.link.endpoints[1].interface-name
-      name: ITFCE-EPB
-      type: string
-    - jsonPath: .spec.link.endpoints[1].tag[?(@.key=='multihoming')].value
-      name: MH-EPB
-      type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TopoTopologyLink is the Schema for the TopologyLink API
+        description: Definition is the Schema for the Topology API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -82,7 +58,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TopologyLinkSpec struct
+            description: DefinitionSpec struct
             properties:
               lifecycle:
                 description: Lifecycle determines the deletion and deployment lifecycle
@@ -107,51 +83,30 @@ spec:
                     type: string
                 type: object
               properties:
-                description: Properties define the properties of the Topology
+                description: Properties define the properties of the Definition
                 properties:
-                  admin-state:
-                    default: enable
-                    enum:
-                    - disable
-                    - enable
-                    type: string
-                  description:
-                    description: kubebuilder:validation:MinLength=1 kubebuilder:validation:MaxLength=255
-                    pattern: '[A-Za-z0-9 !@#$^&()|+=`~.,''/_:;?-]*'
-                    type: string
-                  endpoints:
+                  discoveryRules:
                     items:
-                      description: TopologyLinkEndpoints struct
                       properties:
-                        interface-name:
-                          description: kubebuilder:validation:MinLength=3 kubebuilder:validation:MaxLength=20
-                          pattern: int-([1-9](\d){0,1}(/[abcd])?(/[1-9](\d){0,1})?/(([1-9](\d){0,1})|(1[0-1]\d)|(12[0-8])))|
+                        digitalTwin:
+                          default: false
+                          type: boolean
+                        namespacedName:
                           type: string
-                        node-name:
-                          type: string
-                        tag:
-                          items:
-                            properties:
-                              key:
-                                type: string
-                              value:
-                                type: string
-                            type: object
-                          type: array
                       required:
-                      - interface-name
-                      - node-name
+                      - namespacedName
                       type: object
                     type: array
-                  name:
-                    type: string
-                  tag:
+                  templates:
                     items:
                       properties:
-                        key:
+                        digitalTwin:
+                          default: false
+                          type: boolean
+                        namespacedName:
                           type: string
-                        value:
-                          type: string
+                      required:
+                      - namespacedName
                       type: object
                     type: array
                 type: object
@@ -167,7 +122,7 @@ spec:
                 type: object
             type: object
           status:
-            description: A TopologyLinkStatus represents the observed state of a TopologyLink.
+            description: A DefinitionStatus represents the observed state of a Definition.
             properties:
               conditions:
                 description: Conditions of the resource.
@@ -251,14 +206,10 @@ spec:
                     type: integer
                 type: object
               oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
+                additionalProperties:
+                  type: string
+                description: Oda []Tag `json:"oda,omitempty"`
+                type: object
               rootPaths:
                 description: rootPaths define the rootPaths of the cr, used to monitor
                   the resource status

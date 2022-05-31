@@ -34,14 +34,12 @@ import (
 )
 
 func InitNode(c resource.ClientApplicator, p intent.Intent, name string) intent.Intent {
-	newNodeList := func() topov1alpha1.TnList { return &topov1alpha1.TopologyNodeList{} }
 	return &nodeIntent{
-		client:      c,
-		name:        name,
-		parent:      p,
-		properties:  &topov1alpha1.TopologyNodeProperties{},
-		labels:      map[string]string{},
-		newNodeList: newNodeList,
+		client:     c,
+		name:       name,
+		parent:     p,
+		properties: &topov1alpha1.NodeProperties{},
+		labels:     map[string]string{},
 	}
 }
 
@@ -54,9 +52,8 @@ type nodeIntent struct {
 	parent intent.Intent
 	// children
 	// Data
-	properties  *topov1alpha1.TopologyNodeProperties
-	labels      map[string]string
-	newNodeList func() topov1alpha1.TnList
+	properties *topov1alpha1.NodeProperties
+	labels     map[string]string
 }
 
 func (x *nodeIntent) GetData() interface{} {
@@ -88,16 +85,17 @@ func (x *nodeIntent) List(ctx context.Context, mr resource.Managed, resources ma
 	opts := []client.ListOption{
 		client.MatchingLabels{nddappv1.LabelKeyOwner: odns.GetOdnsResourceKindName(mr.GetName(), strings.ToLower(mr.GetObjectKind().GroupVersionKind().Kind))},
 	}
-	list := x.newNodeList()
-	if err := x.client.List(ctx, list, opts...); err != nil {
+	//list := x.newNodeList()
+	nl := &topov1alpha1.NodeList{}
+	if err := x.client.List(ctx, nl, opts...); err != nil {
 		return nil, err
 	}
 
-	for _, d := range list.GetNodes() {
+	for _, d := range nl.Items {
 		if _, ok := resources[d.GetObjectKind().GroupVersionKind().Kind]; !ok {
 			resources[d.GetObjectKind().GroupVersionKind().Kind] = make(map[string]resource.Managed)
 		}
-		resources[d.GetObjectKind().GroupVersionKind().Kind][d.GetName()] = d
+		resources[d.GetObjectKind().GroupVersionKind().Kind][d.GetName()] = &d
 	}
 
 	return resources, nil
@@ -109,7 +107,7 @@ func (x *nodeIntent) Validate(ctx context.Context, mr resource.Managed, resource
 		[]string{
 			strings.ToLower(x.name)})
 
-	if r, ok := resources[topov1alpha1.TopologyNodeKind]; ok {
+	if r, ok := resources[topov1alpha1.NodeKind]; ok {
 		delete(r, resourceName)
 	}
 
@@ -118,9 +116,9 @@ func (x *nodeIntent) Validate(ctx context.Context, mr resource.Managed, resource
 
 func (x *nodeIntent) Delete(ctx context.Context, mr resource.Managed, resources map[string]map[string]resource.Managed) error {
 	// local CR deletion
-	if res, ok := resources[topov1alpha1.TopologyNodeKind]; ok {
+	if res, ok := resources[topov1alpha1.NodeKind]; ok {
 		for resName := range res {
-			o := &topov1alpha1.TopologyNode{
+			o := &topov1alpha1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      resName,
 					Namespace: mr.GetNamespace(),
@@ -134,7 +132,7 @@ func (x *nodeIntent) Delete(ctx context.Context, mr resource.Managed, resources 
 	return nil
 }
 
-func (x *nodeIntent) buildCR(mr resource.Managed, deviceName string, labels map[string]string) (*topov1alpha1.TopologyNode, error) {
+func (x *nodeIntent) buildCR(mr resource.Managed, deviceName string, labels map[string]string) (*topov1alpha1.Node, error) {
 	resourceName := odns.GetOdnsResourceName(mr.GetName(), strings.ToLower(mr.GetObjectKind().GroupVersionKind().Kind),
 		[]string{
 			//strings.ToLower(x.name),
@@ -151,14 +149,14 @@ func (x *nodeIntent) buildCR(mr resource.Managed, deviceName string, labels map[
 		namespace = "default"
 	}
 
-	return &topov1alpha1.TopologyNode{
+	return &topov1alpha1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            resourceName,
 			Namespace:       namespace,
 			Labels:          labels,
 			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(mr, mr.GetObjectKind().GroupVersionKind()))},
 		},
-		Spec: topov1alpha1.TopologyNodeSpec{
+		Spec: topov1alpha1.NodeSpec{
 			ResourceSpec: nddv1.ResourceSpec{},
 			Properties:   x.properties,
 		},

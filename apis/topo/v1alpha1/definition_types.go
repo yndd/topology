@@ -24,27 +24,41 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// TopologyTemplateProperties define the properties of the TopologyTemplate
-type TopologyTemplateProperties struct {
-}
-
-// TopologyTemplateSpec struct
-type TopologyTemplateSpec struct {
+// DefinitionSpec struct
+type DefinitionSpec struct {
 	nddv1.ResourceSpec `json:",inline"`
-	// Properties define the properties of the TopologyTemplate
-	Properties TopologyTemplateProperties `json:"properties,omitempty"`
+	// Properties define the properties of the Definition
+	Properties *DefinitionProperties `json:"properties,omitempty"`
 }
 
-// A TopologyTemplateStatus represents the observed state of a TopologyTemplate.
-type TopologyTemplateStatus struct {
+// A DefinitionStatus represents the observed state of a Definition.
+type DefinitionStatus struct {
 	nddv1.ResourceStatus `json:",inline"`
-	//TopologyName            *string               `json:"topology-name,omitempty"`
-	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
+}
+
+// DefinitionProperties define the properties of the Definition
+type DefinitionProperties struct {
+	Templates      []*DefinitionTemplate      `json:"templates,omitempty"`
+	DiscoveryRules []*DefinitionDiscoveryRule `json:"discoveryRules,omitempty"`
+}
+
+type DefinitionTemplate struct {
+	DefinitionRule `json:",inline"`
+}
+
+type DefinitionDiscoveryRule struct {
+	DefinitionRule `json:",inline"`
+}
+
+type DefinitionRule struct {
+	NamespacedName string `json:"namespacedName"`
+	// +kubebuilder:default=false
+	DigitalTwin bool `json:"digitalTwin,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// TopologyTemplate is the Schema for the TopologyTemplate API
+// Definition is the Schema for the Topology API
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
@@ -54,31 +68,31 @@ type TopologyTemplateStatus struct {
 // +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
-type TopologyTemplate struct {
+type Definition struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopologyTemplateSpec   `json:"spec,omitempty"`
-	Status TopologyTemplateStatus `json:"status,omitempty"`
+	Spec   DefinitionSpec   `json:"spec,omitempty"`
+	Status DefinitionStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// TopologyTemplateList contains a list of TopologyTemplates
-type TopologyTemplateList struct {
+// DefinitionList contains a list of Definitions
+type DefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TopologyTemplate `json:"items"`
+	Items           []Definition `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&TopologyTemplate{}, &TopologyTemplateList{})
+	SchemeBuilder.Register(&Definition{}, &DefinitionList{})
 }
 
-// TopologyTemplate type metadata.
+// Definition type metadata.
 var (
-	TopologyTemplateKind             = reflect.TypeOf(TopologyTemplate{}).Name()
-	TopologyTemplateGroupKind        = schema.GroupKind{Group: Group, Kind: TopologyTemplateKind}.String()
-	TopologyTemplateKindAPIVersion   = TopologyTemplateKind + "." + GroupVersion.String()
-	TopologyTemplateGroupVersionKind = GroupVersion.WithKind(TopologyTemplateKind)
+	DefinitionKind             = reflect.TypeOf(Definition{}).Name()
+	DefinitionGroupKind        = schema.GroupKind{Group: Group, Kind: DefinitionKind}.String()
+	DefinitionKindAPIVersion   = DefinitionKind + "." + GroupVersion.String()
+	DefinitionGroupVersionKind = GroupVersion.WithKind(DefinitionKind)
 )

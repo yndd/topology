@@ -22,36 +22,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func renderTopology(cr *topov1alpha1.TopologyDefinition) *topov1alpha1.Topology { // nolint:interfacer,gocyclo
+func renderTopology(cr *topov1alpha1.Definition) *topov1alpha1.Topology { // nolint:interfacer,gocyclo
 	return &topov1alpha1.Topology{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cr.GetName(),
 			Namespace:       cr.Namespace,
 			Labels:          map[string]string{},
-			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.TopologyDefinitionGroupVersionKind))},
+			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.DefinitionGroupVersionKind))},
 		},
 		Spec: topov1alpha1.TopologySpec{
 			Properties: topov1alpha1.TopologyProperties{
-				AdminState: "enable",
 				Defaults: &topov1alpha1.TopologyDefaults{
-					NodeAttributes: &topov1alpha1.NodeAttributes{
-						//Position: "infra",
+					NodeProperties: &topov1alpha1.NodeProperties{
+						Position: topov1alpha1.PositionInfra,
 					},
 				},
-				VendorTypeInfo: []*topov1alpha1.VendorTypeInfo{
+				VendorTypeInfo: []*topov1alpha1.NodeProperties{
 					{
-						VendorType:     "nokia-srl",
-						Platform:       "7220 IXR-D2",
-						NodeAttributes: &topov1alpha1.NodeAttributes{
-							//Position: "infra",
-						},
+						VendorType: topov1alpha1.VendorType(topov1alpha1.VendorTypeNokiaSRL),
+						Platform:   "7220 IXR-D2",
+						Position:   topov1alpha1.PositionInfra,
 					},
 					{
-						VendorType:     "nokia-sros",
-						Platform:       "7750 SR1",
-						NodeAttributes: &topov1alpha1.NodeAttributes{
-							//Position: "infra",
-						},
+						VendorType: topov1alpha1.VendorType(topov1alpha1.VendorTypeNokiaSROS),
+						Platform:   "7750 SR1",
+						Position:   topov1alpha1.PositionInfra,
 					},
 				},
 			},

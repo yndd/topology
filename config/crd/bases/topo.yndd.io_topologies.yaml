@@ -85,54 +85,42 @@ spec:
               properties:
                 description: Properties define the properties of the Topology
                 properties:
-                  admin-state:
-                    default: enable
-                    enum:
-                    - disable
-                    - enable
-                    type: string
                   defaults:
                     description: TopologySpecDefaults struct
                     properties:
+                      endpoints:
+                        type: string
+                      expectedSwVersion:
+                        type: string
+                      macAddress:
+                        type: string
+                      platform:
+                        type: string
                       position:
                         type: string
+                      serialNumber:
+                        type: string
                       tag:
-                        items:
-                          properties:
-                            key:
-                              type: string
-                            value:
-                              type: string
-                          type: object
-                        type: array
+                        additionalProperties:
+                          type: string
+                        type: object
                     type: object
-                  description:
-                    description: kubebuilder:validation:MinLength=1 kubebuilder:validation:MaxLength=255
-                    pattern: '[A-Za-z0-9 !@#$^&()|+=`~.,''/_:;?-]*'
-                    type: string
-                  vendor-type-info:
+                  vendorTypeInfo:
                     items:
-                      description: TopologyKind struct
+                      description: NodeProperties struct
                       properties:
+                        endpoints:
+                          type: string
+                        expectedSwVersion:
+                          type: string
+                        macAddress:
+                          type: string
                         platform:
                           type: string
                         position:
                           type: string
-                        tag:
-                          items:
-                            properties:
-                              key:
-                                type: string
-                              value:
-                                type: string
-                            type: object
-                          type: array
-                        vendor-type:
-                          description: Name = nokia-srl or nokia-sros
+                        serialNumber:
                           type: string
-                      required:
-                      - platform
-                      - vendor-type
                       type: object
                     type: array
                 type: object
@@ -232,14 +220,10 @@ spec:
                     type: integer
                 type: object
               oda:
-                items:
-                  properties:
-                    key:
-                      type: string
-                    value:
-                      type: string
-                  type: object
-                type: array
+                additionalProperties:
+                  type: string
+                description: Oda []Tag `json:"oda,omitempty"`
+                type: object
               rootPaths:
                 description: rootPaths define the rootPaths of the cr, used to monitor
                   the resource status

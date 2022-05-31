@@ -18,6 +18,7 @@ package definition
 
 import (
 	"context"
+	"strings"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -81,7 +82,7 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 		return
 	}
 
-	tdl := &topov1alpha1.TopologyDefinitionList{}
+	tdl := &topov1alpha1.DefinitionList{}
 	if err := e.client.List(e.ctx, tdl); err != nil {
 		log.Debug("cannot get topology definition list", "error", err)
 		return
@@ -90,7 +91,8 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 	for _, td := range tdl.Items {
 		if td.Spec.Properties.DiscoveryRules != nil {
 			for _, dr := range td.Spec.Properties.DiscoveryRules {
-				if dr.Name == r {
+				namespace, name := GetNameAndNamespace(dr.NamespacedName)
+				if namespace == cr.GetNamespace() && name == r {
 					queue.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 						Namespace: td.GetNamespace(),
 						Name:      td.GetName()}})
@@ -101,4 +103,12 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 			}
 		}
 	}
+}
+
+func GetNameAndNamespace(namespacedName string) (string, string) {
+	split := strings.Split(namespacedName, "/")
+	if len(split) == 1 {
+		return "default", split[0]
+	}
+	return split[1], split[0]
 }

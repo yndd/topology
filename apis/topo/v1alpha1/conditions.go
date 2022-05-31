@@ -24,24 +24,16 @@ import (
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 )
 
-// Condition Kinds.
-const (
-	// A ConditionKindAllocationReady indicates whether the allocation is ready.
-	ConditionKindReady nddv1.ConditionKind = "Ready"
-)
-
 // ConditionReasons a package is or is not installed.
 const (
-	ConditionReasonReady        nddv1.ConditionReason = "Ready"
-	ConditionReasonNotReady     nddv1.ConditionReason = "NotReady"
-	ConditionReasonAllocating   nddv1.ConditionReason = "Allocating"
-	ConditionReasonDeAllocating nddv1.ConditionReason = "DeAllocating"
+	ConditionReasonReady    nddv1.ConditionReason = "Ready"
+	ConditionReasonNotReady nddv1.ConditionReason = "NotReady"
 )
 
 // Ready indicates that the resource is ready.
 func Ready() nddv1.Condition {
 	return nddv1.Condition{
-		Kind:               ConditionKindReady,
+		Kind:               nddv1.ConditionKindReady,
 		Status:             corev1.ConditionTrue,
 		LastTransitionTime: metav1.Now(),
 		Reason:             ConditionReasonReady,
@@ -51,7 +43,7 @@ func Ready() nddv1.Condition {
 // NotReady indicates that the resource is not ready.
 func NotReady() nddv1.Condition {
 	return nddv1.Condition{
-		Kind:               ConditionKindReady,
+		Kind:               nddv1.ConditionKindReady,
 		Status:             corev1.ConditionFalse,
 		LastTransitionTime: metav1.Now(),
 		Reason:             ConditionReasonNotReady,

@@ -28,7 +28,6 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	orgv1alpha1 "github.com/yndd/nddr-org-registry/apis/org/v1alpha1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"github.com/yndd/topology/internal/handler"
 
@@ -48,8 +47,8 @@ const (
 // Setup adds a controller that reconciles infra.
 func Setup(mgr ctrl.Manager, nddopts *shared.NddControllerOptions) error {
 	name := "nddo/" + strings.ToLower(topov1alpha1.TopologyGroupKind)
-	topofn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
-	dpfn := func() orgv1alpha1.Dp { return &orgv1alpha1.Deployment{} }
+	//topofn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
+	//dpfn := func() orgv1alpha1.Dp { return &orgv1alpha1.Deployment{} }
 
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(topov1alpha1.TopologyGroupVersionKind),
@@ -59,9 +58,9 @@ func Setup(mgr ctrl.Manager, nddopts *shared.NddControllerOptions) error {
 				Client:     mgr.GetClient(),
 				Applicator: resource.NewAPIPatchingApplicator(mgr.GetClient()),
 			},
-			log:           nddopts.Logger.WithValues("applogic", name),
-			newTopology:   topofn,
-			newDeployment: dpfn,
+			log: nddopts.Logger.WithValues("applogic", name),
+			//newTopology:   topofn,
+			//newDeployment: dpfn,
 			//handler:       nddopts.Handler,
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -80,26 +79,28 @@ type application struct {
 	client resource.ClientApplicator
 	log    logging.Logger
 
-	newTopology   func() topov1alpha1.Tp
-	newDeployment func() orgv1alpha1.Dp
+	//newTopology   func() topov1alpha1.Tp
+	//newDeployment func() orgv1alpha1.Dp
 
 	handler handler.Handler
 }
 
-func getCrName(cr topov1alpha1.Tp) string {
+func getCrName(cr *topov1alpha1.Topology) string {
 	return strings.Join([]string{cr.GetNamespace(), cr.GetName()}, ".")
 }
 
 func (r *application) Initialize(ctx context.Context, mr resource.Managed) error {
-	cr, ok := mr.(*topov1alpha1.Topology)
-	if !ok {
-		return errors.New(errUnexpectedResource)
-	}
+	/*
+		cr, ok := mr.(*topov1alpha1.Topology)
+		if !ok {
+			return errors.New(errUnexpectedResource)
+		}
 
-	if err := cr.InitializeResource(); err != nil {
-		r.log.Debug("Cannot initialize", "error", err)
-		return err
-	}
+		if err := cr.InitializeResource(); err != nil {
+			r.log.Debug("Cannot initialize", "error", err)
+			return err
+		}
+	*/
 
 	return nil
 }
@@ -134,7 +135,7 @@ func (r *application) FinalDelete(ctx context.Context, mr resource.Managed) {
 	r.handler.Delete(crName)
 }
 
-func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tp) (map[string]string, error) {
+func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Topology) (map[string]string, error) {
 	log := r.log.WithValues("function", "handleAppLogic", "crname", cr.GetName())
 	log.Debug("handleAppLogic")
 
@@ -167,20 +168,12 @@ func (r *application) handleAppLogic(ctx context.Context, cr topov1alpha1.Tp) (m
 		}
 	*/
 
-	if cr.GetAdminState() == "disable" {
-		//cr.SetStatus("down")
-		//cr.SetReason("admin disable")
+	/*
 		cr.SetOrganization(cr.GetOrganization())
 		cr.SetDeployment(cr.GetDeployment())
 		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
 		//cr.SetTopologyName(cr.GetTopologyName())
-	} else {
-		//cr.SetStatus("up")
-		//cr.SetReason("")
-		cr.SetOrganization(cr.GetOrganization())
-		cr.SetDeployment(cr.GetDeployment())
-		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-		//cr.SetTopologyName(cr.GetTopologyName())
-	}
+	*/
+
 	return make(map[string]string), nil
 }
