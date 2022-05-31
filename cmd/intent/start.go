@@ -38,7 +38,7 @@ import (
 
 	"github.com/yndd/topology/internal/controllers"
 
-	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	"github.com/yndd/ndd-runtime/pkg/shared"
 )
 
 var (

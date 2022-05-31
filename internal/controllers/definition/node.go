@@ -20,12 +20,12 @@ import (
 	"strings"
 
 	"github.com/yndd/ndd-runtime/pkg/meta"
-	targetv1 "github.com/yndd/ndd-target-runtime/apis/dvr/v1"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func renderNode(drName string, cr *topov1alpha1.Definition, t targetv1.Tg) *topov1alpha1.Node { // nolint:interfacer,gocyclo
+func renderNode(drName string, cr *topov1alpha1.Definition, t *targetv1.Target) *topov1alpha1.Node { // nolint:interfacer,gocyclo
 	return &topov1alpha1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.Join([]string{cr.GetName(), t.GetName()}, "."),
@@ -38,7 +38,7 @@ func renderNode(drName string, cr *topov1alpha1.Definition, t targetv1.Tg) *topo
 		Spec: topov1alpha1.NodeSpec{
 			Properties: &topov1alpha1.NodeProperties{
 				//VendorType: t.GetDiscoveryInfo().VendorType,
-				Platform: *t.GetDiscoveryInfo().Kind,
+				Platform: t.Status.DiscoveryInfo.Platform,
 				//Index:
 				//Position:
 				// Tags://

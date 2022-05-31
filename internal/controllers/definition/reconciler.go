@@ -29,8 +29,8 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/resource"
-	targetv1 "github.com/yndd/ndd-target-runtime/apis/dvr/v1"
-	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	"github.com/yndd/ndd-runtime/pkg/shared"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,7 +52,7 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	//tlfn := func() topov1alpha1.Tl { return &topov1alpha1.TopologyLink{} }
 	//tllfn := func() topov1alpha1.TlList { return &topov1alpha1.TopologyLinkList{} }
 	//tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
-	tlfn := func() targetv1.TgList { return &targetv1.TargetList{} }
+	//tlfn := func() targetv1.TgList { return &targetv1.TargetList{} }
 
 	c := resource.ClientApplicator{
 		Client:     mgr.GetClient(),
@@ -62,10 +62,10 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
 		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
 		managed.WithApplogic(&applogic{
-			log:           nddcopts.Logger.WithValues("applogic", name),
-			client:        c,
-			newTargetList: tlfn,
-			intents:       make(map[string]*intent.Compositeintent),
+			log:    nddcopts.Logger.WithValues("applogic", name),
+			client: c,
+			//newTargetList: tlfn,
+			intents: make(map[string]*intent.Compositeintent),
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
@@ -90,7 +90,7 @@ type applogic struct {
 	client resource.ClientApplicator
 	log    logging.Logger
 
-	newTargetList func() targetv1.TgList
+	//newTargetList func() targetv1.TgList
 
 	m       sync.Mutex
 	intents map[string]*intent.Compositeintent
@@ -151,10 +151,10 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			client.InNamespace(namespace),
 		}
 		// get targets in the namespace based on the discovery rule
-		tl := r.newTargetList()
+		tl := &targetv1.TargetList{}
 		r.client.List(ctx, tl, opts...)
 
-		for _, t := range tl.GetTargets() {
+		for _, t := range tl.Items {
 			// create a node
 			/*
 				ci := r.intents[crName]
@@ -169,14 +169,14 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 				n.Platform = *t.GetDiscoveryInfo().Kind
 			*/
 
-			n := renderNode(dr.NamespacedName, cr, t)
+			n := renderNode(dr.NamespacedName, cr, &t)
 			if err := r.client.Apply(ctx, n); err != nil {
 				return err
 			}
 
 			switch n.Spec.Properties.VendorType {
-			case "nokia-srl":
-			case "nokia-sros":
+			case targetv1.VendorTypeNokiaSRL:
+			case targetv1.VendorTypeNokiaSROS:
 			default:
 				return fmt.Errorf("unsupported vendor type: %s", n.Spec.Properties.VendorType)
 			}

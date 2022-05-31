@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	targetv1 "github.com/yndd/ndd-target-runtime/apis/dvr/v1"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 )
 

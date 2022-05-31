@@ -17,7 +17,7 @@ spec:
     name: topology-provider
     type: deployment
     permissionRequests:
-    - apiGroups: [dvr.ndd.yndd.io]
+    - apiGroups: [target.yndd.io]
       resources: [targets, targets/status]
       verbs: [get, list, watch, update, patch, create, delete]
     containers:

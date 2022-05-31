@@ -18,6 +18,7 @@ package definition
 
 import (
 	"github.com/yndd/ndd-runtime/pkg/meta"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,12 +40,12 @@ func renderTopology(cr *topov1alpha1.Definition) *topov1alpha1.Topology { // nol
 				},
 				VendorTypeInfo: []*topov1alpha1.NodeProperties{
 					{
-						VendorType: topov1alpha1.VendorType(topov1alpha1.VendorTypeNokiaSRL),
+						VendorType: targetv1.VendorTypeNokiaSRL,
 						Platform:   "7220 IXR-D2",
 						Position:   topov1alpha1.PositionInfra,
 					},
 					{
-						VendorType: topov1alpha1.VendorType(topov1alpha1.VendorTypeNokiaSROS),
+						VendorType: targetv1.VendorTypeNokiaSROS,
 						Platform:   "7750 SR1",
 						Position:   topov1alpha1.PositionInfra,
 					},

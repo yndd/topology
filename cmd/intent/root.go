@@ -25,8 +25,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	targetv1 "github.com/yndd/ndd-target-runtime/apis/dvr/v1"
 	orgv1alpha1 "github.com/yndd/nddr-org-registry/apis/org/v1alpha1"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )

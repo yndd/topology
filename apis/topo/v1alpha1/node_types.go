@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -38,22 +39,13 @@ type NodeStatus struct {
 
 // NodeProperties struct
 type NodeProperties struct {
-	VendorType        VendorType `json:"endpoints,omitempty"`
-	Platform          string     `json:"platform,omitempty"`
-	Position          Position   `json:"position,omitempty"`
-	MacAddress        string     `json:"macAddress,omitempty"`
-	SerialNumber      string     `json:"serialNumber,omitempty"`
-	ExpectedSWVersion string     `json:"expectedSwVersion,omitempty"`
+	VendorType        targetv1.VendorType `json:"endpoints,omitempty"`
+	Platform          string              `json:"platform,omitempty"`
+	Position          Position            `json:"position,omitempty"`
+	MacAddress        string              `json:"macAddress,omitempty"`
+	SerialNumber      string              `json:"serialNumber,omitempty"`
+	ExpectedSWVersion string              `json:"expectedSwVersion,omitempty"`
 }
-
-type VendorType string
-
-// VendorType enum.
-const (
-	VendorTypeUnknown   Position = "unknown"
-	VendorTypeNokiaSRL  Position = "nokiaSRL"
-	VendorTypeNokiaSROS Position = "nokiaSROS"
-)
 
 type Position string
 

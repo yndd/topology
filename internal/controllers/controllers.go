@@ -19,7 +19,7 @@ package controllers
 import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	"github.com/yndd/ndd-runtime/pkg/shared"
 	"github.com/yndd/topology/internal/controllers/definition"
 	"github.com/yndd/topology/internal/controllers/link"
 	"github.com/yndd/topology/internal/controllers/node"

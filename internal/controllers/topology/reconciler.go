@@ -32,7 +32,7 @@ import (
 	"github.com/yndd/topology/internal/handler"
 
 	//"github.com/yndd/topology/internal/shared"
-	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	"github.com/yndd/ndd-runtime/pkg/shared"
 )
 
 const (

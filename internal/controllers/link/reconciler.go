@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
-	"github.com/yndd/ndd-target-runtime/pkg/shared"
+	"github.com/yndd/ndd-runtime/pkg/shared"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"github.com/yndd/topology/internal/handler"
 	corev1 "k8s.io/api/core/v1"
