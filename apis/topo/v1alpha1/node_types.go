@@ -45,7 +45,7 @@ type NodeProperties struct {
 	MacAddress        string              `json:"macAddress,omitempty"`
 	SerialNumber      string              `json:"serialNumber,omitempty"`
 	ExpectedSWVersion string              `json:"expectedSwVersion,omitempty"`
-	MgmtIpAddress     string              `json:"mgmtIPAddress,omitempty"`
+	MgmtIPAddress     string              `json:"mgmtIPAddress,omitempty"`
 	Tag               map[string]string   `json:"tag,omitempty"`
 }
 
