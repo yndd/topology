@@ -91,17 +91,23 @@ spec:
               properties:
                 description: Properties define the properties of the Topology
                 properties:
-                  endpoints:
-                    type: string
                   expectedSwVersion:
                     type: string
                   macAddress:
+                    type: string
+                  mgmtIPAddress:
                     type: string
                   platform:
                     type: string
                   position:
                     type: string
                   serialNumber:
+                    type: string
+                  tag:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  vendorType:
                     type: string
                 type: object
               targetRef:

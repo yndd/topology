@@ -88,11 +88,11 @@ spec:
                   defaults:
                     description: TopologySpecDefaults struct
                     properties:
-                      endpoints:
-                        type: string
                       expectedSwVersion:
                         type: string
                       macAddress:
+                        type: string
+                      mgmtIPAddress:
                         type: string
                       platform:
                         type: string
@@ -104,22 +104,30 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                      vendorType:
+                        type: string
                     type: object
                   vendorTypeInfo:
                     items:
                       description: NodeProperties struct
                       properties:
-                        endpoints:
-                          type: string
                         expectedSwVersion:
                           type: string
                         macAddress:
+                          type: string
+                        mgmtIPAddress:
                           type: string
                         platform:
                           type: string
                         position:
                           type: string
                         serialNumber:
+                          type: string
+                        tag:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        vendorType:
                           type: string
                       type: object
                     type: array

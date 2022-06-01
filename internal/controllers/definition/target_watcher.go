@@ -91,7 +91,7 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 	for _, td := range tdl.Items {
 		if td.Spec.Properties.DiscoveryRules != nil {
 			for _, dr := range td.Spec.Properties.DiscoveryRules {
-				namespace, name := meta.GetNameAndNamespace(dr.NamespacedName)
+				namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
 				if namespace == cr.GetNamespace() && name == r {
 					queue.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 						Namespace: td.GetNamespace(),

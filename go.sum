@@ -1624,8 +1624,8 @@ github.com/yndd/ndd-runtime v0.1.10/go.mod h1:Y07uIZQgSqz5h3UeAYp24JyDjugH0T/zeA
 github.com/yndd/ndd-runtime v0.2.24/go.mod h1:1mXKpIPdY80e0LxpGiVMtTWcHuuXIBZEHlpvLRj+6Fs=
 github.com/yndd/ndd-runtime v0.2.51/go.mod h1:1mXKpIPdY80e0LxpGiVMtTWcHuuXIBZEHlpvLRj+6Fs=
 github.com/yndd/ndd-runtime v0.5.8/go.mod h1:J9Lqkfh+oCtRBkVYdPPwnIaOnv9CC30tJ6WTyYEcr0Q=
-github.com/yndd/ndd-runtime v0.5.14 h1:+ccERf4QPALArt8/sioYNkoLnOmGO6u0m+POAR/6Iqg=
-github.com/yndd/ndd-runtime v0.5.14/go.mod h1:WCH+2nDwDRsLKIe0iL2EEgR/xr6jxIJ5tNJBi60EzLU=
+github.com/yndd/ndd-runtime v0.5.15 h1:IZCu8BSMxhhXZv9ZtCQxtT0GySJSGir9eUwWUiAdFjo=
+github.com/yndd/ndd-runtime v0.5.15/go.mod h1:WCH+2nDwDRsLKIe0iL2EEgR/xr6jxIJ5tNJBi60EzLU=
 github.com/yndd/ndd-yang v0.1.62/go.mod h1:GT/8efIchBH1sQ6J64AM1FZDXXIaWeirkYUpbmDPlHI=
 github.com/yndd/ndd-yang v0.1.276/go.mod h1:vcKhP5OU3oJHSEILaE0HEgZKxftcu2GFOGdS6w0TauM=
 github.com/yndd/ndd-yang v0.1.448/go.mod h1:rIFXnOALLTloxMQtqGmTq32q6V9iTVHySE4ELup7hes=
@@ -1661,8 +1661,8 @@ github.com/yndd/nddr-org-registry v0.0.13/go.mod h1:1166NOTEsglHJoDbJKPgVXqX/wa2
 github.com/yndd/nddr-topo-registry v0.0.4/go.mod h1:f5/qMkWQa7namvEgYrNZisgvhcee4bgnFCt30NWOcf8=
 github.com/yndd/registrator v0.0.19 h1:2f2OF/ISIulvyhVTVXvCwal8N6EntC+uPW6jX/sPtrA=
 github.com/yndd/registrator v0.0.19/go.mod h1:6y85l1HVkcwJNSknGFyx8jBmw4VDgRUaF0Spku6sHiw=
-github.com/yndd/target v0.0.53 h1:7WLiU/orsU8luf01xZk6BCiDLYnZTNPbilUKsej/RLI=
-github.com/yndd/target v0.0.53/go.mod h1:4mOG4FYxgBI9v5boKQi+K6VPq46A2G8ScHpFdbZvWQc=
+github.com/yndd/target v0.0.54 h1:8orXu39eZNm4OopjjwoiBnh13KlntCCLe0Ab72nuUVU=
+github.com/yndd/target v0.0.54/go.mod h1:K3MvPb3M34xaQodpa+hpdzx9t3s17/ePSS+PJcWTKGM=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

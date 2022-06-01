@@ -146,7 +146,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
-		namespace, name := meta.GetNameAndNamespace(dr.NamespacedName)
+		namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
 		opts := []client.ListOption{
 			client.MatchingLabels{LabelKeyDiscoveryRule: name},
 			client.InNamespace(namespace),
