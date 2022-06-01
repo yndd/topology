@@ -39,7 +39,7 @@ type NodeStatus struct {
 
 // NodeProperties struct
 type NodeProperties struct {
-	VendorType        targetv1.VendorType `json:"endpoints,omitempty"`
+	VendorType        targetv1.VendorType `json:"vendorType,omitempty"`
 	Platform          string              `json:"platform,omitempty"`
 	Position          Position            `json:"position,omitempty"`
 	MacAddress        string              `json:"macAddress,omitempty"`

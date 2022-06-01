@@ -18,9 +18,9 @@ package definition
 
 import (
 	"context"
-	"strings"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	"github.com/yndd/ndd-runtime/pkg/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -91,7 +91,7 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 	for _, td := range tdl.Items {
 		if td.Spec.Properties.DiscoveryRules != nil {
 			for _, dr := range td.Spec.Properties.DiscoveryRules {
-				namespace, name := GetNameAndNamespace(dr.NamespacedName)
+				namespace, name := meta.GetNameAndNamespace(dr.NamespacedName)
 				if namespace == cr.GetNamespace() && name == r {
 					queue.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 						Namespace: td.GetNamespace(),
@@ -103,12 +103,4 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 			}
 		}
 	}
-}
-
-func GetNameAndNamespace(namespacedName string) (string, string) {
-	split := strings.Split(namespacedName, "/")
-	if len(split) == 1 {
-		return "default", split[0]
-	}
-	return split[1], split[0]
 }
