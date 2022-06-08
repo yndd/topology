@@ -96,6 +96,7 @@ docker-push: ## Push docker image with the manager.
 .PHONY: package-build
 package-build: kubectl-ndd ## build ndd package.
 	rm -rf package/*.nddpkg
+	gomplate -d repo=env:REPO -f package/ndd.gotmpl > package/ndd.yaml
 	cd package;PATH=$$PATH:$(LOCALBIN) kubectl ndd package build -t provider;cd ..
 
 .PHONY: package-push

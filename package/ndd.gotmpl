@@ -25,7 +25,7 @@ spec:
           name: https
     - container:
         name: controller
-        image: yndd/topology-provider-controller:latest
+        image: {{ include "repo" | default "yndd" }}/topology-provider-controller:latest
       extras:
       - {name: metrics, service: true, port: 8443, target-port: 443}
       - {name: profiler, volume: true}
