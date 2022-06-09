@@ -138,14 +138,20 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	r.intents[crName] = intent.New(r.client, crName)
 	//r.abstractions[crName] = abstraction.New(r.client, crName)
 
+	// +++++ PRE-PROCESSING  +++++
+	// +++++ GET RESOURCES  +++++
+	// +++++ CREATE INTENT +++++
+
 	// create a topology
 	topo := renderTopology(cr)
 	if err := r.client.Apply(ctx, topo); err != nil {
 		return err
 	}
 
+	// +++++ BREAKDOWN  +++++
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
+
 		namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
 		opts := []client.ListOption{
 			client.MatchingLabels{LabelKeyDiscoveryRule: name},
@@ -157,6 +163,12 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 		for _, t := range tl.Items {
 			// create a node
+
+			// +++++ CREATE CHILD INTENT +++++
+			// +++++ NODE INTENT   - VENDOR AGNOSTIC +++++
+			// +++++ STATE INTENT  - VENDOR SPECIFIC +++++
+			// +++++ CONFIG INTENT - VENDOR SPECIFIC +++++
+
 			/*
 				ci := r.intents[crName]
 				ci.AddChild(t.GetName(), intenttopov1alpha1.InitNode(r.client, ci, t.GetName()))
@@ -177,6 +189,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 			switch n.Spec.Properties.VendorType {
 			case targetv1.VendorTypeNokiaSRL:
+				// populate data structure
 			case targetv1.VendorTypeNokiaSROS:
 			default:
 				return fmt.Errorf("unsupported vendor type: %s", n.Spec.Properties.VendorType)
@@ -186,6 +199,11 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 		}
 	}
+
+	// **** COLLECT ALL                                  *****
+	// **** FEEDBACK TO TOP LEVEL                        *****
+	// **** SUBSCRIPTION WITH HANDLER (CREATE LINK/NODE) *****
+	// **** TRANSACTION                                  *****
 
 	return nil
 }

@@ -5,10 +5,10 @@
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
 VERSION ?= latest
-REPO ?= yndd
+REGISTRY ?= yndd
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 # This variable is used to construct full image tags for ndd packages.
-IMAGE_TAG_BASE ?= $(REPO)/topology-provider
+IMAGE_TAG_BASE ?= $(REGISTRY)/topology-provider
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE)-controller:$(VERSION)
@@ -96,7 +96,7 @@ docker-push: ## Push docker image with the manager.
 .PHONY: package-build
 package-build: kubectl-ndd ## build ndd package.
 	rm -rf package/*.nddpkg
-	gomplate -d repo=env:REPO -f package/ndd.gotmpl > package/ndd.yaml
+	gomplate -d registry=env:REGISTRY -f package/ndd.gotmpl > package/ndd.yaml
 	cd package;PATH=$$PATH:$(LOCALBIN) kubectl ndd package build -t provider;cd ..
 
 .PHONY: package-push

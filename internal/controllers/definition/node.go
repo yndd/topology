@@ -38,7 +38,7 @@ func renderNode(drName string, cr *topov1alpha1.Definition, t *targetv1.Target) 
 		Spec: topov1alpha1.NodeSpec{
 			Properties: &topov1alpha1.NodeProperties{
 				//VendorType: t.GetDiscoveryInfo().VendorType,
-				Platform: t.Status.DiscoveryInfo.Platform,
+				Platform: t.GetDiscoveryInfo().Platform,
 				//Index:
 				//Position:
 				// Tags://
