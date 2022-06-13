@@ -59,8 +59,8 @@ type Template struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	//Spec   targetv1alpha1pb.TemplateSpec   `json:"spec,omitempty"`
-	//Status targetv1alpha1pb.TemplateStatus `json:"status,omitempty"`
+	Spec   TemplateSpec   `json:"spec,omitempty"`
+	Status TemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

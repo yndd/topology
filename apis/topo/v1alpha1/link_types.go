@@ -29,7 +29,7 @@ import (
 type LinkSpec struct {
 	nddv1.ResourceSpec `json:",inline"`
 	// Properties define the properties of the Topology
-	Properties LinkProperties `json:"properties,omitempty"`
+	Properties *LinkProperties `json:"properties,omitempty"`
 }
 
 // A LinkStatus represents the observed state of a Link.
