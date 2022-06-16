@@ -25,8 +25,20 @@ import (
 	//targetv1alpha1pb "github.com/yndd/topology/gen/go/apis/topo/v1alpha1"
 )
 
+type SupportServers struct {
+	DnsServers []*string `json:"dnsServers,omitempty"`
+	NtPServers []*string `json:"netServers,omitempty"`
+}
+
+type TemplateSubnet struct {
+	IPSubnet string `json:"ipSubnet,omitempty"`
+	SupportServers `json:"inline"`
+}
+
 // TemplateProperties define the properties of the Template
 type TemplateProperties struct {
+	SupportServers `json:"inline"`
+	Subnet     *TemplateSubnet `json:"subnet,omitempty"`
 }
 
 // TemplateSpec struct

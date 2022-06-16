@@ -6,9 +6,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.6.0
 	github.com/spf13/cobra v1.4.0
-	github.com/yndd/app-runtime v0.0.6
+	github.com/yndd/app-runtime v0.0.7
 	github.com/yndd/ndd-core v0.2.22
-	github.com/yndd/ndd-runtime v0.5.18
+	github.com/yndd/ndd-runtime v0.5.19
 	github.com/yndd/nddr-org-registry v0.0.13
 	github.com/yndd/target v0.0.100
 	k8s.io/api v0.24.1
@@ -17,7 +17,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.12.1
 )
 
-require github.com/yndd/catalog v0.0.7
+require github.com/yndd/catalog v0.0.9
 
 require (
 	github.com/armon/go-metrics v0.3.10 // indirect

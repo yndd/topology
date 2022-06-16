@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/yndd/app-runtime/pkg/app"
 	"github.com/yndd/app-runtime/pkg/intent"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/catalog"
@@ -184,9 +185,9 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
 
-		namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
+		namespace, drName := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
 		opts := []client.ListOption{
-			client.MatchingLabels{LabelKeyDiscoveryRule: name},
+			client.MatchingLabels{LabelKeyDiscoveryRule: drName},
 			client.InNamespace(namespace),
 		}
 		// get targets in the namespace based on the discovery rule
@@ -201,8 +202,15 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			// +++++ STATE INTENT  - VENDOR SPECIFIC +++++
 			// +++++ CONFIG INTENT - VENDOR SPECIFIC +++++
 
+			meta := app.GetMeta(cr,
+				map[string]string{
+					"discovery.yndd.io/discovery-rule": drName,
+				},
+				map[string]string{},
+			)	
+
 			// render node
-			n, err := r.nodeFn(&catalog.Input{ObjectMeta: t.ObjectMeta})
+			n, err := r.nodeFn(&catalog.Input{Object: &t, ObjectMeta: meta})
 			if err != nil {
 				return err
 			}
@@ -212,7 +220,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			}
 
 			// render config
-			c, err := r.configLLDPFn(&catalog.Input{ObjectMeta: t.ObjectMeta})
+			c, err := r.configLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
 			if err != nil {
 				return err
 			}
@@ -221,7 +229,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			}
 
 			// render state
-			s, err := r.stateLLDPFn(&catalog.Input{ObjectMeta: t.ObjectMeta})
+			s, err := r.stateLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
 			if err != nil {
 				return err
 			}
