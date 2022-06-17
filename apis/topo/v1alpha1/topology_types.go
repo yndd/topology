@@ -28,7 +28,7 @@ import (
 type TopologySpec struct {
 	nddv1.ResourceSpec `json:",inline"`
 	// Properties define the properties of the Topology
-	Properties TopologyProperties `json:"properties,omitempty"`
+	Properties *TopologyProperties `json:"properties,omitempty"`
 }
 
 // A TopologyStatus represents the observed state of a Topology.

@@ -18,14 +18,15 @@ package definition
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/yndd/app-runtime/pkg/app"
 	"github.com/yndd/app-runtime/pkg/intent"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
+	"github.com/yndd/catalog"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/meta"
@@ -54,6 +55,23 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	//tllfn := func() topov1alpha1.TlList { return &topov1alpha1.TopologyLinkList{} }
 	//tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
 	//tlfn := func() targetv1.TgList { return &targetv1.TargetList{} }
+	cat := catalog.Default
+	topoFn, err := cat.GetFn(catalog.FnKey{Name: "configure_topology", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	if err != nil {
+		return err
+	}
+	nodeFn, err := cat.GetFn(catalog.FnKey{Name: "configure_node", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	if err != nil {
+		return err
+	}
+	configLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "configure_lldp", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	if err != nil {
+		return err
+	}
+	stateLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "state_lldp", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	if err != nil {
+		return err
+	}
 
 	c := resource.ClientApplicator{
 		Client:     mgr.GetClient(),
@@ -63,10 +81,14 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
 		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
 		managed.WithApplogic(&applogic{
-			log:    nddcopts.Logger.WithValues("applogic", name),
-			client: c,
-			//newTargetList: tlfn,
-			intents: make(map[string]*intent.Compositeintent),
+			log:          nddcopts.Logger.WithValues("applogic", name),
+			client:       c,
+			topoFn:       topoFn,
+			nodeFn:       nodeFn,
+			configLLDPFn: configLLDPFn,
+			stateLLDPFn:  stateLLDPFn,
+			m:            sync.Mutex{},
+			intents:      make(map[string]*intent.Compositeintent),
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
@@ -92,6 +114,12 @@ type applogic struct {
 	log    logging.Logger
 
 	//newTargetList func() targetv1.TgList
+
+	// Functions used in the app
+	topoFn       func(in *catalog.Input) (resource.Managed, error)
+	nodeFn       func(in *catalog.Input) (resource.Managed, error)
+	configLLDPFn func(in *catalog.Input) (resource.Managed, error)
+	stateLLDPFn  func(in *catalog.Input) (resource.Managed, error)
 
 	m       sync.Mutex
 	intents map[string]*intent.Compositeintent
@@ -143,7 +171,12 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// +++++ CREATE INTENT +++++
 
 	// create a topology
-	topo := renderTopology(cr)
+
+	topo, err := r.topoFn(&catalog.Input{ObjectMeta: cr.ObjectMeta})
+	if err != nil {
+		return err
+	}
+	//topo := renderTopology(cr)
 	if err := r.client.Apply(ctx, topo); err != nil {
 		return err
 	}
@@ -152,9 +185,9 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
 
-		namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
+		namespace, drName := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
 		opts := []client.ListOption{
-			client.MatchingLabels{LabelKeyDiscoveryRule: name},
+			client.MatchingLabels{LabelKeyDiscoveryRule: drName},
 			client.InNamespace(namespace),
 		}
 		// get targets in the namespace based on the discovery rule
@@ -169,6 +202,41 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			// +++++ STATE INTENT  - VENDOR SPECIFIC +++++
 			// +++++ CONFIG INTENT - VENDOR SPECIFIC +++++
 
+			meta := app.GetMeta(cr,
+				map[string]string{
+					"discovery.yndd.io/discovery-rule": drName,
+				},
+				map[string]string{},
+			)	
+
+			// render node
+			n, err := r.nodeFn(&catalog.Input{Object: &t, ObjectMeta: meta})
+			if err != nil {
+				return err
+			}
+			//n := renderNode(dr.NamespacedName, cr, &t)
+			if err := r.client.Apply(ctx, n); err != nil {
+				return err
+			}
+
+			// render config
+			c, err := r.configLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
+			if err != nil {
+				return err
+			}
+			if err := r.client.Apply(ctx, c); err != nil {
+				return err
+			}
+
+			// render state
+			s, err := r.stateLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
+			if err != nil {
+				return err
+			}
+			if err := r.client.Apply(ctx, s); err != nil {
+				return err
+			}
+
 			/*
 				ci := r.intents[crName]
 				ci.AddChild(t.GetName(), intenttopov1alpha1.InitNode(r.client, ci, t.GetName()))
@@ -182,18 +250,15 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 				n.Platform = *t.GetDiscoveryInfo().Kind
 			*/
 
-			n := renderNode(dr.NamespacedName, cr, &t)
-			if err := r.client.Apply(ctx, n); err != nil {
-				return err
-			}
-
-			switch n.Spec.Properties.VendorType {
-			case targetv1.VendorTypeNokiaSRL:
-				// populate data structure
-			case targetv1.VendorTypeNokiaSROS:
-			default:
-				return fmt.Errorf("unsupported vendor type: %s", n.Spec.Properties.VendorType)
-			}
+			/*
+				switch n.Spec.Properties.VendorType {
+				case targetv1.VendorTypeNokiaSRL:
+					// populate data structure
+				case targetv1.VendorTypeNokiaSROS:
+				default:
+					return fmt.Errorf("unsupported vendor type: %s", n.Spec.Properties.VendorType)
+				}
+			*/
 
 			// create a state object per vendor type
 

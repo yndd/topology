@@ -25,8 +25,20 @@ import (
 	//targetv1alpha1pb "github.com/yndd/topology/gen/go/apis/topo/v1alpha1"
 )
 
+type SupportServers struct {
+	DnsServers []*string `json:"dnsServers,omitempty"`
+	NtPServers []*string `json:"netServers,omitempty"`
+}
+
+type TemplateSubnet struct {
+	IPSubnet string `json:"ipSubnet,omitempty"`
+	SupportServers `json:"inline"`
+}
+
 // TemplateProperties define the properties of the Template
 type TemplateProperties struct {
+	SupportServers `json:"inline"`
+	Subnet     *TemplateSubnet `json:"subnet,omitempty"`
 }
 
 // TemplateSpec struct
@@ -59,8 +71,8 @@ type Template struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	//Spec   targetv1alpha1pb.TemplateSpec   `json:"spec,omitempty"`
-	//Status targetv1alpha1pb.TemplateStatus `json:"status,omitempty"`
+	Spec   TemplateSpec   `json:"spec,omitempty"`
+	Status TemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

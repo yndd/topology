@@ -16,6 +16,7 @@ limitations under the License.
 
 package definition
 
+/*
 import (
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	targetv1 "github.com/yndd/target/apis/target/v1"
@@ -32,7 +33,7 @@ func renderTopology(cr *topov1alpha1.Definition) *topov1alpha1.Topology { // nol
 			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.DefinitionGroupVersionKind))},
 		},
 		Spec: topov1alpha1.TopologySpec{
-			Properties: topov1alpha1.TopologyProperties{
+			Properties: &topov1alpha1.TopologyProperties{
 				Defaults: &topov1alpha1.TopologyDefaults{
 					NodeProperties: &topov1alpha1.NodeProperties{
 						Position: topov1alpha1.PositionInfra,
@@ -54,3 +55,4 @@ func renderTopology(cr *topov1alpha1.Definition) *topov1alpha1.Topology { // nol
 		},
 	}
 }
+*/
