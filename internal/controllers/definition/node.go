@@ -16,6 +16,8 @@ limitations under the License.
 
 package definition
 
+/*
+
 import (
 	"strings"
 
@@ -46,3 +48,4 @@ func renderNode(drName string, cr *topov1alpha1.Definition, t *targetv1.Target) 
 		},
 	}
 }
+*/

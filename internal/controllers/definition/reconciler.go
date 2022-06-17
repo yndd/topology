@@ -27,6 +27,7 @@ import (
 	"github.com/yndd/app-runtime/pkg/intent"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/catalog"
+	discoveryv1alphav1 "github.com/yndd/discovery/api/v1alpha1"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/meta"
@@ -34,6 +35,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/shared"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	topointentv1alpha1 "github.com/yndd/topology/pkg/intent/topo/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -163,8 +165,15 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	log := r.log.WithValues("crName", crName)
 	log.Debug("populateSchema")
 
-	r.intents[crName] = intent.New(r.client, crName)
+	//r.intents[crName] = intent.New(r.client, crName)
 	//r.abstractions[crName] = abstraction.New(r.client, crName)
+
+	ci := app.New(&app.IntentInfo{
+		Log:       r.log,
+		Name:      cr.GetName(),
+		Namespace: cr.GetNamespace(),
+		Client:    r.client,
+	})
 
 	// +++++ PRE-PROCESSING  +++++
 	// +++++ GET RESOURCES  +++++
@@ -176,10 +185,13 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	if err != nil {
 		return err
 	}
-	//topo := renderTopology(cr)
-	if err := r.client.Apply(ctx, topo); err != nil {
-		return err
-	}
+
+	ci.AddEntry(
+		topov1alpha1.TopologyGroupVersionKind.String(),
+		topo.GetName(),
+		topointentv1alpha1.InitTopology(r.client),
+		topo,
+	)
 
 	// +++++ BREAKDOWN  +++++
 	// per discovery rule check if the discovery rule matches within the namespace
@@ -197,27 +209,31 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 		for _, t := range tl.Items {
 			// create a node
 
-			// +++++ CREATE CHILD INTENT +++++
+			// +++++ DEFINE CHILD INTENT +++++
 			// +++++ NODE INTENT   - VENDOR AGNOSTIC +++++
 			// +++++ STATE INTENT  - VENDOR SPECIFIC +++++
 			// +++++ CONFIG INTENT - VENDOR SPECIFIC +++++
 
-			meta := app.GetMeta(cr,
+			meta := app.GetMeta(
+				cr,
 				map[string]string{
-					"discovery.yndd.io/discovery-rule": drName,
+					discoveryv1alphav1.LabelKeyDiscoveryRule: drName,
 				},
 				map[string]string{},
-			)	
+			)
 
 			// render node
 			n, err := r.nodeFn(&catalog.Input{Object: &t, ObjectMeta: meta})
 			if err != nil {
 				return err
 			}
-			//n := renderNode(dr.NamespacedName, cr, &t)
-			if err := r.client.Apply(ctx, n); err != nil {
-				return err
-			}
+
+			ci.AddEntry(
+				topov1alpha1.NodeGroupVersionKind.String(),
+				n.GetName(),
+				topointentv1alpha1.InitNode(r.client),
+				topo,
+			)
 
 			// render config
 			c, err := r.configLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
@@ -237,38 +253,19 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 				return err
 			}
 
-			/*
-				ci := r.intents[crName]
-				ci.AddChild(t.GetName(), intenttopov1alpha1.InitNode(r.client, ci, t.GetName()))
-				node := ci.GetChildData(t.GetName())
-				n, ok := node.(*topov1alpha1.TopologyNodeProperties)
-				if !ok {
-					return errors.New("expected ygot struct")
-				}
-				n.AdminState = "enable"
-				n.VendorType = *t.GetDiscoveryInfo().VendorType
-				n.Platform = *t.GetDiscoveryInfo().Kind
-			*/
-
-			/*
-				switch n.Spec.Properties.VendorType {
-				case targetv1.VendorTypeNokiaSRL:
-					// populate data structure
-				case targetv1.VendorTypeNokiaSROS:
-				default:
-					return fmt.Errorf("unsupported vendor type: %s", n.Spec.Properties.VendorType)
-				}
-			*/
-
-			// create a state object per vendor type
-
 		}
 	}
+	// *** UPDATE SUBSCRIBER WITH CURRENT PATHS FROM STATE CR
 
-	// **** COLLECT ALL                                  *****
-	// **** FEEDBACK TO TOP LEVEL                        *****
-	// **** SUBSCRIPTION WITH HANDLER (CREATE LINK/NODE) *****
-	// **** TRANSACTION                                  *****
+	// *** LOOK AT LINK STATE FROM NATS/CACHE
+	// -> query NATS per target and see which links are needed (last per subject)
+
+	// **** COLLECTED ALL based on current k8s state               *****
+	// **** DELTA - REMOVE THE ONCE NO LONGER NEEDED               *****
+	// **** TRANSACTION                                            *****
+	if err := ci.Apply(ctx); err != nil {
+		return err
+	}
 
 	return nil
 }

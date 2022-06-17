@@ -6,7 +6,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.6.0
 	github.com/spf13/cobra v1.4.0
-	github.com/yndd/app-runtime v0.0.7
+	github.com/yndd/app-runtime v0.0.10
 	github.com/yndd/ndd-core v0.2.22
 	github.com/yndd/ndd-runtime v0.5.19
 	github.com/yndd/nddr-org-registry v0.0.13
@@ -17,7 +17,10 @@ require (
 	sigs.k8s.io/controller-runtime v0.12.1
 )
 
-require github.com/yndd/catalog v0.0.9
+require (
+	github.com/yndd/catalog v0.0.9
+	github.com/yndd/discovery v0.0.0-20220609164715-6c15d31e632f
+)
 
 require (
 	github.com/armon/go-metrics v0.3.10 // indirect
@@ -44,7 +47,6 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-msgpack v1.1.5 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.9.6 // indirect

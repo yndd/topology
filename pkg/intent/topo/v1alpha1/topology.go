@@ -26,19 +26,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func InitNode(c resource.ClientApplicator) app.Object {
-	return &node{
+func InitTopology(c resource.ClientApplicator) app.Object {
+	return &topology{
 		client: c,
 	}
 }
 
-type node struct {
+type topology struct {
 	// k8s client
 	client resource.ClientApplicator
 }
 
-func (x *node) List(ctx context.Context, opts []client.ListOption) (resource.ManagedList, error) {
-	ol := &topov1alpha1.NodeList{}
+func (x *topology) List(ctx context.Context, opts []client.ListOption) (resource.ManagedList, error) {
+	ol := &topov1alpha1.TopologyList{}
 	if err := x.client.List(ctx, ol, opts...); err != nil {
 		return nil, err
 	}

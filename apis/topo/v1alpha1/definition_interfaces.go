@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
+	"github.com/yndd/ndd-runtime/pkg/resource"
 	//"github.com/yndd/ndd_runtime/pkg/resource"
 	//"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -117,4 +118,12 @@ func (x *Definition) SetRootPaths(rootPaths []string) {
 
 func (x *Definition) GetNamespacedName() string {
 	return strings.Join([]string{x.Namespace, x.Name}, "/")
+}
+
+func (x *DefinitionList) GetItems() []resource.Managed {
+	rl := []resource.Managed{}
+	for _, l := range x.Items {
+		rl = append(rl, &l)
+	}
+	return rl
 }

@@ -1915,8 +1915,8 @@ github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:
 github.com/yeya24/promlinter v0.1.0/go.mod h1:rs5vtZzeBHqqMwXqFScncpCF6u06lezhZepno9AB1Oc=
 github.com/yndd/app-runtime v0.0.5/go.mod h1:M3fnYfiW2+jNcvCrg1fuNIra6sUpLueMteHOJ0S0YNc=
 github.com/yndd/app-runtime v0.0.6/go.mod h1:M3fnYfiW2+jNcvCrg1fuNIra6sUpLueMteHOJ0S0YNc=
-github.com/yndd/app-runtime v0.0.7 h1:HsfDCwRv0c6Tfd9kwQIoN09mQNbR2hme2/ARf4lhnfo=
-github.com/yndd/app-runtime v0.0.7/go.mod h1:M3fnYfiW2+jNcvCrg1fuNIra6sUpLueMteHOJ0S0YNc=
+github.com/yndd/app-runtime v0.0.10 h1:CESwSKFhvYXQAkAJqBQokeTeeAPIIudCPZVs3z5d+iU=
+github.com/yndd/app-runtime v0.0.10/go.mod h1:M3fnYfiW2+jNcvCrg1fuNIra6sUpLueMteHOJ0S0YNc=
 github.com/yndd/cache v0.0.1/go.mod h1:huDvNDRGRl20+jAT3hMBZoNFuqEXMaZ7IwMRjEd+o50=
 github.com/yndd/cache v0.0.4/go.mod h1:huDvNDRGRl20+jAT3hMBZoNFuqEXMaZ7IwMRjEd+o50=
 github.com/yndd/cache v0.0.5/go.mod h1:hG94StQNZxE5HPXgsQbj1K78HCgoWfCHx7o8z9Z3Jag=
@@ -1925,6 +1925,8 @@ github.com/yndd/cache v0.0.8/go.mod h1:hG94StQNZxE5HPXgsQbj1K78HCgoWfCHx7o8z9Z3J
 github.com/yndd/catalog v0.0.9 h1:trEgBg0MLlZK0STpIscP8MAfssP2g4AVtU4Gkp4cgeo=
 github.com/yndd/catalog v0.0.9/go.mod h1:cOJcnIU7Aw/H1HdbotZj/n3GGw/sbxs0o9XQ1LRmGYI=
 github.com/yndd/config-srl v0.0.2/go.mod h1:h/argAlxdsl055vxok/iLGZUrLTFpphSzqjwrAv10EU=
+github.com/yndd/discovery v0.0.0-20220609164715-6c15d31e632f h1:PDgmBTKHYJcbX69DzD0ZGLGoCsimyA0qs5vihdabhE4=
+github.com/yndd/discovery v0.0.0-20220609164715-6c15d31e632f/go.mod h1:TXKigXwwh3IhWEkuY81nDotDF6bTLbEBfRaMuDGRYGI=
 github.com/yndd/grpchandlers v0.0.1/go.mod h1:ZR/jz4S8xdU1B538xvlPPy+F03NyKmhxVZt/Rv9cM0c=
 github.com/yndd/grpchandlers v0.0.4/go.mod h1:VJZztLIyt41BJhNclhez98bLBEoDW6dBJ4GZv4P2Xcc=
 github.com/yndd/grpchandlers v0.0.5/go.mod h1:VJZztLIyt41BJhNclhez98bLBEoDW6dBJ4GZv4P2Xcc=

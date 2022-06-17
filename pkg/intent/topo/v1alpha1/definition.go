@@ -26,19 +26,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func InitNode(c resource.ClientApplicator) app.Object {
-	return &node{
+func InitDefinition(c resource.ClientApplicator) app.Object {
+	return &definition{
 		client: c,
 	}
 }
 
-type node struct {
+type definition struct {
 	// k8s client
 	client resource.ClientApplicator
 }
 
-func (x *node) List(ctx context.Context, opts []client.ListOption) (resource.ManagedList, error) {
-	ol := &topov1alpha1.NodeList{}
+func (x *definition) List(ctx context.Context, opts []client.ListOption) (resource.ManagedList, error) {
+	ol := &topov1alpha1.DefinitionList{}
 	if err := x.client.List(ctx, ol, opts...); err != nil {
 		return nil, err
 	}

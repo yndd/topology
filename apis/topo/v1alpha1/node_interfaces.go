@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
+	"github.com/yndd/ndd-runtime/pkg/resource"
 )
 
 /*
@@ -224,3 +225,11 @@ func (x *Node) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
 }
 */
+
+func (x *NodeList) GetItems() []resource.Managed {
+	rl := []resource.Managed{}
+	for _, l := range x.Items {
+		rl = append(rl, &l)
+	}
+	return rl
+}
