@@ -1,6 +1,3 @@
-
-
-
 /*
 Copyright 2021 NDD.
 

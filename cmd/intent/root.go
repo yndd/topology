@@ -26,6 +26,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	orgv1alpha1 "github.com/yndd/nddr-org-registry/apis/org/v1alpha1"
+	statev1alpha1 "github.com/yndd/state/apis/state/v1alpha1"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	//+kubebuilder:scaffold:imports
@@ -62,5 +63,6 @@ func init() {
 	utilruntime.Must(topov1alpha1.AddToScheme(scheme))
 	utilruntime.Must(orgv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(targetv1.AddToScheme(scheme))
+	utilruntime.Must(statev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

@@ -19,12 +19,11 @@ package definition
 import (
 	"context"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/yndd/app-runtime/pkg/app"
-	"github.com/yndd/app-runtime/pkg/intent"
+	"github.com/yndd/app-runtime/pkg/appcontext"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/catalog"
 	discoveryv1alphav1 "github.com/yndd/discovery/api/v1alpha1"
@@ -33,9 +32,9 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	"github.com/yndd/ndd-runtime/pkg/shared"
+	statev1alpha1 "github.com/yndd/state/apis/state/v1alpha1"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
-	topointentv1alpha1 "github.com/yndd/topology/pkg/intent/topo/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -74,23 +73,41 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	if err != nil {
 		return err
 	}
+	topoResourceFn := func() resource.Managed { return &topov1alpha1.Topology{} }
+	topoResourceListFn := func() resource.ManagedList { return &topov1alpha1.TopologyList{} }
+	nodeResourceFn := func() resource.Managed { return &topov1alpha1.Node{} }
+	nodeResourceListFn := func() resource.ManagedList { return &topov1alpha1.NodeList{} }
+	stateResourceFn := func() resource.Managed { return &statev1alpha1.State{} }
+	stateResourceListFn := func() resource.ManagedList { return &statev1alpha1.StateList{} }
 
 	c := resource.ClientApplicator{
 		Client:     mgr.GetClient(),
 		Applicator: resource.NewAPIPatchingApplicator(mgr.GetClient()),
 	}
 
+	ac := appcontext.New(
+		appcontext.WithClient(c),
+		appcontext.WithLogging(nddcopts.Logger.WithValues("appcontext", name)),
+		appcontext.WithResourceFn(topov1alpha1.TopologyGroupVersionKind.String(), topoFn, topoResourceFn, topoResourceListFn),
+		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), nodeFn, nodeResourceFn, nodeResourceListFn),
+		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), configLLDPFn, nodeResourceFn, nodeResourceListFn),
+		appcontext.WithResourceFn(statev1alpha1.StateGroupVersionKind.String(), stateLLDPFn, stateResourceFn, stateResourceListFn),
+	)
+
 	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
 		managed.WithLogger(nddcopts.Logger.WithValues("controller", name)),
 		managed.WithApplogic(&applogic{
-			log:          nddcopts.Logger.WithValues("applogic", name),
-			client:       c,
-			topoFn:       topoFn,
-			nodeFn:       nodeFn,
-			configLLDPFn: configLLDPFn,
-			stateLLDPFn:  stateLLDPFn,
-			m:            sync.Mutex{},
-			intents:      make(map[string]*intent.Compositeintent),
+			log:    nddcopts.Logger.WithValues("applogic", name),
+			client: c,
+			/*
+				topoFn:       topoFn,
+				nodeFn:       nodeFn,
+				configLLDPFn: configLLDPFn,
+				stateLLDPFn:  stateLLDPFn,
+				m:            sync.Mutex{},
+				intents:      make(map[string]*intent.Compositeintent),
+			*/
+			ac: ac,
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
@@ -117,15 +134,19 @@ type applogic struct {
 
 	//newTargetList func() targetv1.TgList
 
-	// Functions used in the app
-	topoFn       func(in *catalog.Input) (resource.Managed, error)
-	nodeFn       func(in *catalog.Input) (resource.Managed, error)
-	configLLDPFn func(in *catalog.Input) (resource.Managed, error)
-	stateLLDPFn  func(in *catalog.Input) (resource.Managed, error)
+	/*
+		// Functions used in the app
+		topoFn       func(in *catalog.Input) (resource.Managed, error)
+		nodeFn       func(in *catalog.Input) (resource.Managed, error)
+		configLLDPFn func(in *catalog.Input) (resource.Managed, error)
+		stateLLDPFn  func(in *catalog.Input) (resource.Managed, error)
 
-	m       sync.Mutex
-	intents map[string]*intent.Compositeintent
-	//abstractions map[string]*abstraction.Compositeabstraction
+		m       sync.Mutex
+		intents map[string]*intent.Compositeintent
+		//abstractions map[string]*abstraction.Compositeabstraction
+	*/
+
+	ac appcontext.AppContext
 }
 
 func (r *applogic) Initialize(ctx context.Context, mr resource.Managed) error {
@@ -160,20 +181,23 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	if !ok {
 		return errors.New(errUnexpectedResource)
 	}
-	crName := cr.GetNamespacedName()
 
-	log := r.log.WithValues("crName", crName)
+	log := r.log.WithValues("crName", cr.GetNamespacedName())
 	log.Debug("populateSchema")
 
 	//r.intents[crName] = intent.New(r.client, crName)
 	//r.abstractions[crName] = abstraction.New(r.client, crName)
 
-	ci := app.New(&app.IntentInfo{
-		Log:       r.log,
-		Name:      cr.GetName(),
-		Namespace: cr.GetNamespace(),
-		Client:    r.client,
-	})
+	/*
+		ci := app.New(&app.IntentInfo{
+			Log:       r.log,
+			Name:      cr.GetName(),
+			Namespace: cr.GetNamespace(),
+			Client:    r.client,
+		})
+	*/
+
+	ac := r.ac.Clone(mr.GetName(), mr.GetNamespace())
 
 	// +++++ PRE-PROCESSING  +++++
 	// +++++ GET RESOURCES  +++++
@@ -181,17 +205,25 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 	// create a topology
 
-	topo, err := r.topoFn(&catalog.Input{ObjectMeta: cr.ObjectMeta})
-	if err != nil {
-		return err
-	}
-
-	ci.AddEntry(
+	ac.AddInstance(
 		topov1alpha1.TopologyGroupVersionKind.String(),
-		topo.GetName(),
-		topointentv1alpha1.InitTopology(r.client),
-		topo,
+		&catalog.Input{ObjectMeta: cr.ObjectMeta},
 	)
+
+	/*
+		topo, err := r.topoFn(&catalog.Input{ObjectMeta: cr.ObjectMeta})
+		if err != nil {
+			log.Debug("cannot create topology", "error", err)
+			return err
+		}
+
+		ci.AddEntry(
+			topov1alpha1.TopologyGroupVersionKind.String(),
+			topo.GetName(),
+			topointentv1alpha1.InitTopology(r.client),
+			topo,
+		)
+	*/
 
 	// +++++ BREAKDOWN  +++++
 	// per discovery rule check if the discovery rule matches within the namespace
@@ -207,6 +239,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 		r.client.List(ctx, tl, opts...)
 
 		for _, t := range tl.Items {
+			log.WithValues("target", t.GetName())
 			// create a node
 
 			// +++++ DEFINE CHILD INTENT +++++
@@ -223,35 +256,58 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			)
 
 			// render node
-			n, err := r.nodeFn(&catalog.Input{Object: &t, ObjectMeta: meta})
-			if err != nil {
-				return err
-			}
-
-			ci.AddEntry(
+			ac.AddInstance(
 				topov1alpha1.NodeGroupVersionKind.String(),
-				n.GetName(),
-				topointentv1alpha1.InitNode(r.client),
-				topo,
+				&catalog.Input{Object: &t, ObjectMeta: meta},
 			)
 
+			/*
+				n, err := r.nodeFn(&catalog.Input{Object: &t, ObjectMeta: meta})
+				if err != nil {
+					log.Debug("cannot create node", "error", err)
+					return err
+
+				}
+
+				ci.AddEntry(
+					topov1alpha1.NodeGroupVersionKind.String(),
+					n.GetName(),
+					topointentv1alpha1.InitNode(r.client),
+					n,
+				)
+			*/
+
 			// render config
-			c, err := r.configLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
-			if err != nil {
-				return err
-			}
-			if err := r.client.Apply(ctx, c); err != nil {
-				return err
-			}
+			ac.AddInstance(
+				"dummyConfig",
+				&catalog.Input{Object: &t, ObjectMeta: meta},
+			)
+			/*
+				c, err := r.configLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
+				if err != nil {
+					log.Debug("cannot create lldp config", "error", err)
+					return err
+				}
+				if err := r.client.Apply(ctx, c); err != nil {
+					return err
+				}
+			*/
 
 			// render state
-			s, err := r.stateLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
-			if err != nil {
-				return err
-			}
-			if err := r.client.Apply(ctx, s); err != nil {
-				return err
-			}
+			ac.AddInstance(
+				statev1alpha1.StateGroupVersionKind.String(),
+				&catalog.Input{Object: &t, ObjectMeta: meta},
+			)
+			/*
+				s, err := r.stateLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
+				if err != nil {
+					log.Debug("cannot create lldp state", "error", err)
+					return err
+				}
+				if err := r.client.Apply(ctx, s); err != nil {
+					return err
+				}
+			*/
 
 		}
 	}
@@ -263,7 +319,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// **** COLLECTED ALL based on current k8s state               *****
 	// **** DELTA - REMOVE THE ONCE NO LONGER NEEDED               *****
 	// **** TRANSACTION                                            *****
-	if err := ci.Apply(ctx); err != nil {
+	if err := ac.Apply(ctx); err != nil {
 		return err
 	}
 

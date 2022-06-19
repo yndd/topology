@@ -31,14 +31,14 @@ type SupportServers struct {
 }
 
 type TemplateSubnet struct {
-	IPSubnet string `json:"ipSubnet,omitempty"`
+	IPSubnet       string `json:"ipSubnet,omitempty"`
 	SupportServers `json:"inline"`
 }
 
 // TemplateProperties define the properties of the Template
 type TemplateProperties struct {
 	SupportServers `json:"inline"`
-	Subnet     *TemplateSubnet `json:"subnet,omitempty"`
+	Subnet         *TemplateSubnet `json:"subnet,omitempty"`
 }
 
 // TemplateSpec struct
