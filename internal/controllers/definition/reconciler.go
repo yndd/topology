@@ -26,6 +26,7 @@ import (
 	"github.com/yndd/app-runtime/pkg/appcontext"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/catalog"
+	
 	discoveryv1alphav1 "github.com/yndd/discovery/api/v1alpha1"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
@@ -57,19 +58,23 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	//tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
 	//tlfn := func() targetv1.TgList { return &targetv1.TargetList{} }
 	cat := catalog.Default
-	topoFn, err := cat.GetFn(catalog.FnKey{Name: "configure_topology", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	runPodFn, err := cat.GetFn(catalog.FnKey{Name: "run_pod", Version: "latest"})
 	if err != nil {
 		return err
 	}
-	nodeFn, err := cat.GetFn(catalog.FnKey{Name: "configure_node", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	topoFn, err := cat.GetFn(catalog.FnKey{Name: "configure_topology", Version: "latest"})
 	if err != nil {
 		return err
 	}
-	configLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "configure_lldp", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	nodeFn, err := cat.GetFn(catalog.FnKey{Name: "configure_node", Version: "latest"})
 	if err != nil {
 		return err
 	}
-	stateLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "state_lldp", Version: "latest", Vendor: targetv1.VendorTypeUnknown})
+	configLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "configure_lldp", Version: "latest"})
+	if err != nil {
+		return err
+	}
+	stateLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "state_lldp", Version: "latest"})
 	if err != nil {
 		return err
 	}
@@ -88,10 +93,11 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	ac := appcontext.New(
 		appcontext.WithClient(c),
 		appcontext.WithLogging(nddcopts.Logger.WithValues("appcontext", name)),
-		appcontext.WithResourceFn(topov1alpha1.TopologyGroupVersionKind.String(), topoFn, topoResourceFn, topoResourceListFn),
-		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), nodeFn, nodeResourceFn, nodeResourceListFn),
-		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), configLLDPFn, nodeResourceFn, nodeResourceListFn),
-		appcontext.WithResourceFn(statev1alpha1.StateGroupVersionKind.String(), stateLLDPFn, stateResourceFn, stateResourceListFn),
+		appcontext.WithResourceFn(topov1alpha1.TopologyGroupVersionKind.String(), appcontext.GvkTypeSpecific, topoFn, topoResourceFn, topoResourceListFn),
+		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), appcontext.GvkTypeSpecific, nodeFn, nodeResourceFn, nodeResourceListFn),
+		appcontext.WithResourceFn("Config.config.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, configLLDPFn, nil, nil),
+		appcontext.WithResourceFn(statev1alpha1.StateGroupVersionKind.String(), appcontext.GvkTypeSpecific, stateLLDPFn, stateResourceFn, stateResourceListFn),
+		appcontext.WithResourceFn("Run.run.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, runPodFn, nil, nil),
 	)
 
 	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
@@ -185,47 +191,14 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	log := r.log.WithValues("crName", cr.GetNamespacedName())
 	log.Debug("populateSchema")
 
-	//r.intents[crName] = intent.New(r.client, crName)
-	//r.abstractions[crName] = abstraction.New(r.client, crName)
+	ac := r.ac.WithNameSpaceName(mr.GetName(), mr.GetNamespace())
 
-	/*
-		ci := app.New(&app.IntentInfo{
-			Log:       r.log,
-			Name:      cr.GetName(),
-			Namespace: cr.GetNamespace(),
-			Client:    r.client,
-		})
-	*/
-
-	ac := r.ac.Clone(mr.GetName(), mr.GetNamespace())
-
-	// +++++ PRE-PROCESSING  +++++
-	// +++++ GET RESOURCES  +++++
-	// +++++ CREATE INTENT +++++
-
-	// create a topology
-
+	// render a topology
 	ac.AddInstance(
 		topov1alpha1.TopologyGroupVersionKind.String(),
 		&catalog.Input{ObjectMeta: cr.ObjectMeta},
 	)
 
-	/*
-		topo, err := r.topoFn(&catalog.Input{ObjectMeta: cr.ObjectMeta})
-		if err != nil {
-			log.Debug("cannot create topology", "error", err)
-			return err
-		}
-
-		ci.AddEntry(
-			topov1alpha1.TopologyGroupVersionKind.String(),
-			topo.GetName(),
-			topointentv1alpha1.InitTopology(r.client),
-			topo,
-		)
-	*/
-
-	// +++++ BREAKDOWN  +++++
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
 
@@ -240,13 +213,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 
 		for _, t := range tl.Items {
 			log.WithValues("target", t.GetName())
-			// create a node
-
-			// +++++ DEFINE CHILD INTENT +++++
-			// +++++ NODE INTENT   - VENDOR AGNOSTIC +++++
-			// +++++ STATE INTENT  - VENDOR SPECIFIC +++++
-			// +++++ CONFIG INTENT - VENDOR SPECIFIC +++++
-
+			// initialize meta with the context info
 			meta := app.GetMeta(
 				cr,
 				map[string]string{
@@ -261,53 +228,17 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 				&catalog.Input{Object: &t, ObjectMeta: meta},
 			)
 
-			/*
-				n, err := r.nodeFn(&catalog.Input{Object: &t, ObjectMeta: meta})
-				if err != nil {
-					log.Debug("cannot create node", "error", err)
-					return err
-
-				}
-
-				ci.AddEntry(
-					topov1alpha1.NodeGroupVersionKind.String(),
-					n.GetName(),
-					topointentv1alpha1.InitNode(r.client),
-					n,
-				)
-			*/
-
 			// render config
 			ac.AddInstance(
 				"dummyConfig",
 				&catalog.Input{Object: &t, ObjectMeta: meta},
 			)
-			/*
-				c, err := r.configLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
-				if err != nil {
-					log.Debug("cannot create lldp config", "error", err)
-					return err
-				}
-				if err := r.client.Apply(ctx, c); err != nil {
-					return err
-				}
-			*/
 
 			// render state
 			ac.AddInstance(
 				statev1alpha1.StateGroupVersionKind.String(),
 				&catalog.Input{Object: &t, ObjectMeta: meta},
 			)
-			/*
-				s, err := r.stateLLDPFn(&catalog.Input{Object: &t, ObjectMeta: meta})
-				if err != nil {
-					log.Debug("cannot create lldp state", "error", err)
-					return err
-				}
-				if err := r.client.Apply(ctx, s); err != nil {
-					return err
-				}
-			*/
 
 		}
 	}
@@ -316,9 +247,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// *** LOOK AT LINK STATE FROM NATS/CACHE
 	// -> query NATS per target and see which links are needed (last per subject)
 
-	// **** COLLECTED ALL based on current k8s state               *****
-	// **** DELTA - REMOVE THE ONCE NO LONGER NEEDED               *****
-	// **** TRANSACTION                                            *****
+	// perform diff and perform a transaction to the system
 	if err := ac.Apply(ctx); err != nil {
 		return err
 	}

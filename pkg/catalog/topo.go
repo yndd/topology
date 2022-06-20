@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"github.com/yndd/catalog"
+	_ "github.com/yndd/catalog/vendors/all"
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
