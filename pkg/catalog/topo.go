@@ -10,56 +10,101 @@ import (
 )
 
 func init() {
-	catalog.RegisterFns(catalog.Default, Fns)
+	catalog.RegisterEntries(catalog.Default, Entries)
 }
 
-var Fns = map[catalog.FnKey]catalog.Fn{
+var Entries = map[catalog.Key]catalog.Entry{
 	{
 		Name:      "configure_definition",
 		Version:   "latest",
 		Vendor:    targetv1.VendorTypeUnknown,
 		Platform:  "",
 		SwVersion: "",
-	}: ConfigureDefinition,
+	}: {
+		RenderRn: ConfigureDefinition,
+		ResourceFn: func() resource.Managed {
+			return &topov1alpha1.Definition{}
+		},
+		ResourceListFn: func() resource.ManagedList {
+			return &topov1alpha1.DefinitionList{}
+		},
+		MergeFn: nil, // TODO
+	},
 	{
 		Name:      "configure_template",
 		Version:   "latest",
 		Vendor:    targetv1.VendorTypeUnknown,
 		Platform:  "",
 		SwVersion: "",
-	}: ConfigureTemplate,
+	}: {
+		RenderRn: ConfigureTemplate,
+		ResourceFn: func() resource.Managed {
+			return &topov1alpha1.Template{}
+		},
+		ResourceListFn: func() resource.ManagedList {
+			return &topov1alpha1.TemplateList{}
+		},
+		MergeFn: nil, // TODO
+	},
 	{
 		Name:      "configure_topology",
 		Version:   "latest",
 		Vendor:    targetv1.VendorTypeUnknown,
 		Platform:  "",
 		SwVersion: "",
-	}: ConfigureTopology,
+	}: {
+		RenderRn: ConfigureTopology,
+		ResourceFn: func() resource.Managed {
+			return &topov1alpha1.Topology{}
+		},
+		ResourceListFn: func() resource.ManagedList {
+			return &topov1alpha1.TopologyList{}
+		},
+		MergeFn: nil, // TODO
+	},
 	{
 		Name:      "configure_node",
 		Version:   "latest",
 		Vendor:    targetv1.VendorTypeUnknown,
 		Platform:  "",
 		SwVersion: "",
-	}: ConfigureNode,
+	}: {
+		RenderRn: ConfigureNode,
+		ResourceFn: func() resource.Managed {
+			return &topov1alpha1.Node{}
+		},
+		ResourceListFn: func() resource.ManagedList {
+			return &topov1alpha1.NodeList{}
+		},
+		MergeFn: nil, // TODO
+	},
 	{
 		Name:      "configure_link",
 		Version:   "latest",
 		Vendor:    targetv1.VendorTypeUnknown,
 		Platform:  "",
 		SwVersion: "",
-	}: ConfigureLink,
+	}: {
+		RenderRn: ConfigureLink,
+		ResourceFn: func() resource.Managed {
+			return &topov1alpha1.Link{}
+		},
+		ResourceListFn: func() resource.ManagedList {
+			return &topov1alpha1.LinkList{}
+		},
+		MergeFn: nil, // TODO
+	},
 }
 
-func ConfigureDefinition(in *catalog.Input) (resource.Managed, error) {
+func ConfigureDefinition(key catalog.Key, in *catalog.Input) (resource.Managed, error) {
 	return &topov1alpha1.Definition{}, nil
 }
 
-func ConfigureTemplate(in *catalog.Input) (resource.Managed, error) {
+func ConfigureTemplate(key catalog.Key, in *catalog.Input) (resource.Managed, error) {
 	return &topov1alpha1.Template{}, nil
 }
 
-func ConfigureTopology(in *catalog.Input) (resource.Managed, error) {
+func ConfigureTopology(key catalog.Key, in *catalog.Input) (resource.Managed, error) {
 	return &topov1alpha1.Topology{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      in.ObjectMeta.Name,
@@ -89,7 +134,7 @@ func ConfigureTopology(in *catalog.Input) (resource.Managed, error) {
 	}, nil
 }
 
-func ConfigureNode(in *catalog.Input) (resource.Managed, error) {
+func ConfigureNode(key catalog.Key, in *catalog.Input) (resource.Managed, error) {
 	t, err := in.GetTarget()
 	if err != nil {
 		return nil, err
@@ -112,7 +157,7 @@ func ConfigureNode(in *catalog.Input) (resource.Managed, error) {
 
 }
 
-func ConfigureLink(in *catalog.Input) (resource.Managed, error) {
+func ConfigureLink(key catalog.Key, in *catalog.Input) (resource.Managed, error) {
 	return &topov1alpha1.Link{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      in.ObjectMeta.Name, // how to do cr and target

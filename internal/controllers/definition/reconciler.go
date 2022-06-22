@@ -26,7 +26,7 @@ import (
 	"github.com/yndd/app-runtime/pkg/appcontext"
 	"github.com/yndd/app-runtime/pkg/reconciler/managed"
 	"github.com/yndd/catalog"
-	
+
 	discoveryv1alphav1 "github.com/yndd/discovery/api/v1alpha1"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
@@ -53,37 +53,33 @@ const (
 // Setup adds a controller that reconciles infra.
 func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	name := strings.Join([]string{topov1alpha1.Group, strings.ToLower(topov1alpha1.DefinitionKind)}, "/")
-	//tlfn := func() topov1alpha1.Tl { return &topov1alpha1.TopologyLink{} }
-	//tllfn := func() topov1alpha1.TlList { return &topov1alpha1.TopologyLinkList{} }
-	//tpfn := func() topov1alpha1.Tp { return &topov1alpha1.Topology{} }
-	//tlfn := func() targetv1.TgList { return &targetv1.TargetList{} }
 	cat := catalog.Default
-	runPodFn, err := cat.GetFn(catalog.FnKey{Name: "run_pod", Version: "latest"})
+	runPodKey := catalog.Key{Name: "run_pod", Version: "latest"}
+	topoKey := catalog.Key{Name: "configure_topology", Version: "latest"}
+	nodeKey := catalog.Key{Name: "configure_node", Version: "latest"}
+	configLLDPKey := catalog.Key{Name: "configure_lldp", Version: "latest"}
+	stateLLDPKey := catalog.Key{Name: "state_lldp", Version: "latest"}
+
+	runPodEntry, err := cat.Get(runPodKey)
 	if err != nil {
 		return err
 	}
-	topoFn, err := cat.GetFn(catalog.FnKey{Name: "configure_topology", Version: "latest"})
+	topoFnEntry, err := cat.Get(topoKey)
 	if err != nil {
 		return err
 	}
-	nodeFn, err := cat.GetFn(catalog.FnKey{Name: "configure_node", Version: "latest"})
+	nodeFnEntry, err := cat.Get(nodeKey)
 	if err != nil {
 		return err
 	}
-	configLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "configure_lldp", Version: "latest"})
+	configLLDPFnEntry, err := cat.Get(configLLDPKey)
 	if err != nil {
 		return err
 	}
-	stateLLDPFn, err := cat.GetFn(catalog.FnKey{Name: "state_lldp", Version: "latest"})
+	stateLLDPFnEntry, err := cat.Get(stateLLDPKey)
 	if err != nil {
 		return err
 	}
-	topoResourceFn := func() resource.Managed { return &topov1alpha1.Topology{} }
-	topoResourceListFn := func() resource.ManagedList { return &topov1alpha1.TopologyList{} }
-	nodeResourceFn := func() resource.Managed { return &topov1alpha1.Node{} }
-	nodeResourceListFn := func() resource.ManagedList { return &topov1alpha1.NodeList{} }
-	stateResourceFn := func() resource.Managed { return &statev1alpha1.State{} }
-	stateResourceListFn := func() resource.ManagedList { return &statev1alpha1.StateList{} }
 
 	c := resource.ClientApplicator{
 		Client:     mgr.GetClient(),
@@ -93,11 +89,11 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	ac := appcontext.New(
 		appcontext.WithClient(c),
 		appcontext.WithLogging(nddcopts.Logger.WithValues("appcontext", name)),
-		appcontext.WithResourceFn(topov1alpha1.TopologyGroupVersionKind.String(), appcontext.GvkTypeSpecific, topoFn, topoResourceFn, topoResourceListFn),
-		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), appcontext.GvkTypeSpecific, nodeFn, nodeResourceFn, nodeResourceListFn),
-		appcontext.WithResourceFn("Config.config.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, configLLDPFn, nil, nil),
-		appcontext.WithResourceFn(statev1alpha1.StateGroupVersionKind.String(), appcontext.GvkTypeSpecific, stateLLDPFn, stateResourceFn, stateResourceListFn),
-		appcontext.WithResourceFn("Run.run.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, runPodFn, nil, nil),
+		appcontext.WithResourceFn(topov1alpha1.TopologyGroupVersionKind.String(), appcontext.GvkTypeSpecific, topoKey, topoFnEntry.RenderRn, topoFnEntry.ResourceFn, topoFnEntry.ResourceListFn),
+		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), appcontext.GvkTypeSpecific, nodeKey, nodeFnEntry.RenderRn, nodeFnEntry.ResourceFn, nodeFnEntry.ResourceListFn),
+		appcontext.WithResourceFn("Config.config.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, configLLDPKey, configLLDPFnEntry.RenderRn, nil, nil),
+		appcontext.WithResourceFn(statev1alpha1.StateGroupVersionKind.String(), appcontext.GvkTypeSpecific, stateLLDPKey, stateLLDPFnEntry.RenderRn, stateLLDPFnEntry.ResourceFn, stateLLDPFnEntry.ResourceListFn),
+		appcontext.WithResourceFn("Run.run.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, runPodKey, runPodEntry.RenderRn, nil, nil),
 	)
 
 	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
@@ -105,15 +101,7 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 		managed.WithApplogic(&applogic{
 			log:    nddcopts.Logger.WithValues("applogic", name),
 			client: c,
-			/*
-				topoFn:       topoFn,
-				nodeFn:       nodeFn,
-				configLLDPFn: configLLDPFn,
-				stateLLDPFn:  stateLLDPFn,
-				m:            sync.Mutex{},
-				intents:      make(map[string]*intent.Compositeintent),
-			*/
-			ac: ac,
+			ac:     ac,
 		}),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
