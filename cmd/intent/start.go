@@ -107,7 +107,7 @@ var startCmd = &cobra.Command{
 				RateLimiter:             ratelimiter.NewDefaultProviderRateLimiter(ratelimiter.DefaultProviderRPS),
 			},
 		}); err != nil {
-			return errors.Wrap(err, "Cannot add nddo controllers to manager")
+			return errors.Wrap(err, "Cannot add controllers to manager")
 		}
 
 		// +kubebuilder:scaffold:builder

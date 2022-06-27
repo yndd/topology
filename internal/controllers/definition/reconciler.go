@@ -30,12 +30,12 @@ import (
 	discoveryv1alphav1 "github.com/yndd/discovery/api/v1alpha1"
 	"github.com/yndd/ndd-runtime/pkg/event"
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/ndd-runtime/pkg/meta"
 	"github.com/yndd/ndd-runtime/pkg/resource"
 	"github.com/yndd/ndd-runtime/pkg/shared"
 	statev1alpha1 "github.com/yndd/state/apis/state/v1alpha1"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	_ "github.com/yndd/topology/pkg/catalog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -53,17 +53,23 @@ const (
 // Setup adds a controller that reconciles infra.
 func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	name := strings.Join([]string{topov1alpha1.Group, strings.ToLower(topov1alpha1.DefinitionKind)}, "/")
+
 	cat := catalog.Default
-	runPodKey := catalog.Key{Name: "run_pod", Version: "latest"}
+	for _, key := range cat.List() {
+		nddcopts.Logger.Debug("catalog", "key", key)
+	}
+	//runPodKey := catalog.Key{Name: "run_pod", Version: "latest"}
 	topoKey := catalog.Key{Name: "configure_topology", Version: "latest"}
 	nodeKey := catalog.Key{Name: "configure_node", Version: "latest"}
 	configLLDPKey := catalog.Key{Name: "configure_lldp", Version: "latest"}
 	stateLLDPKey := catalog.Key{Name: "state_lldp", Version: "latest"}
 
-	runPodEntry, err := cat.Get(runPodKey)
-	if err != nil {
-		return err
-	}
+	/*
+		runPodEntry, err := cat.Get(runPodKey)
+		if err != nil {
+			return err
+		}
+	*/
 	topoFnEntry, err := cat.Get(topoKey)
 	if err != nil {
 		return err
@@ -89,11 +95,12 @@ func Setup(mgr ctrl.Manager, nddcopts *shared.NddControllerOptions) error {
 	ac := appcontext.New(
 		appcontext.WithClient(c),
 		appcontext.WithLogging(nddcopts.Logger.WithValues("appcontext", name)),
-		appcontext.WithResourceFn(topov1alpha1.TopologyGroupVersionKind.String(), appcontext.GvkTypeSpecific, topoKey, topoFnEntry.RenderRn, topoFnEntry.ResourceFn, topoFnEntry.ResourceListFn),
-		appcontext.WithResourceFn(topov1alpha1.NodeGroupVersionKind.String(), appcontext.GvkTypeSpecific, nodeKey, nodeFnEntry.RenderRn, nodeFnEntry.ResourceFn, nodeFnEntry.ResourceListFn),
-		appcontext.WithResourceFn("Config.config.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, configLLDPKey, configLLDPFnEntry.RenderRn, nil, nil),
-		appcontext.WithResourceFn(statev1alpha1.StateGroupVersionKind.String(), appcontext.GvkTypeSpecific, stateLLDPKey, stateLLDPFnEntry.RenderRn, stateLLDPFnEntry.ResourceFn, stateLLDPFnEntry.ResourceListFn),
-		appcontext.WithResourceFn("Run.run.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, runPodKey, runPodEntry.RenderRn, nil, nil),
+		appcontext.WithCatalog(cat),
+		appcontext.WithResourceFn(topov1alpha1.TopologyKindAPIVersion, appcontext.GvkTypeSpecific, topoKey, topoFnEntry.RenderFn, topoFnEntry.ResourceFn, topoFnEntry.ResourceListFn, nil),
+		appcontext.WithResourceFn(topov1alpha1.NodeKindAPIVersion, appcontext.GvkTypeSpecific, nodeKey, nodeFnEntry.RenderFn, nodeFnEntry.ResourceFn, nodeFnEntry.ResourceListFn, nil),
+		appcontext.WithResourceFn("Config.config.yndd.io/v1alpha1", appcontext.GvkTypeGeneric, configLLDPKey, nil, nil, nil, configLLDPFnEntry.GetGvkKeyFn),
+		appcontext.WithResourceFn(statev1alpha1.StateKindAPIVersion, appcontext.GvkTypeSpecific, stateLLDPKey, stateLLDPFnEntry.RenderFn, stateLLDPFnEntry.ResourceFn, stateLLDPFnEntry.ResourceListFn, nil),
+		//appcontext.WithResourceFn("Run.run.yndd.io.v1alpha1", appcontext.GvkTypeGeneric, runPodKey, runPodEntry.RenderRn, nil, nil),
 	)
 
 	r := managed.NewReconciler(mgr, resource.ManagedKind(topov1alpha1.DefinitionGroupVersionKind),
@@ -177,23 +184,44 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	}
 
 	log := r.log.WithValues("crName", cr.GetNamespacedName())
-	log.Debug("populateSchema")
+	log.Debug("populateSchema", "spec", cr.Spec.Properties)
 
+	// clone the appcontext and initialize with the managed resource name and namespace
 	ac := r.ac.WithNameSpaceName(mr.GetName(), mr.GetNamespace())
+	log.Debug("populateSchema copied appcontext")
+
+	/*
+		for _, acKey := range ac.ListResources() {
+			log.Debug("populateSchema resource", "key", acKey)
+		}
+	*/
+
+	// initialize meta with the context info
+	meta := app.GetMeta(
+		cr,
+		map[string]string{
+			appcontext.IntentOwnerKey: cr.GetName(),
+		},
+		map[string]string{},
+	)
+	log.Debug("populateSchema", "meta", meta)
 
 	// render a topology
-	ac.AddInstance(
-		topov1alpha1.TopologyGroupVersionKind.String(),
-		&catalog.Input{ObjectMeta: cr.ObjectMeta},
-	)
+	log.Debug("populateSchema render Topology")
+	if err := ac.AddInstance(
+		topov1alpha1.TopologyKindAPIVersion,
+		&catalog.Input{ObjectMeta: meta},
+	); err != nil {
+		log.Debug("populateSchema addInstance", "error", err)
+		return err
+	}
 
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
-
-		namespace, drName := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
+		log.WithValues("drName", dr.Name)
 		opts := []client.ListOption{
-			client.MatchingLabels{LabelKeyDiscoveryRule: drName},
-			client.InNamespace(namespace),
+			client.MatchingLabels{LabelKeyDiscoveryRule: dr.Name},
+			client.InNamespace(cr.GetNamespace()),
 		}
 		// get targets in the namespace based on the discovery rule
 		tl := &targetv1.TargetList{}
@@ -202,32 +230,37 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 		for _, t := range tl.Items {
 			log.WithValues("target", t.GetName())
 			// initialize meta with the context info
-			meta := app.GetMeta(
-				cr,
-				map[string]string{
-					discoveryv1alphav1.LabelKeyDiscoveryRule: drName,
-				},
-				map[string]string{},
-			)
+			meta.Labels[discoveryv1alphav1.LabelKeyDiscoveryRule] = dr.Name
 
 			// render node
-			ac.AddInstance(
-				topov1alpha1.NodeGroupVersionKind.String(),
+			log.Debug("populateSchema render Node")
+			if err := ac.AddInstance(
+				topov1alpha1.NodeKindAPIVersion,
 				&catalog.Input{Object: &t, ObjectMeta: meta},
-			)
+			); err != nil {
+				log.Debug("populateSchema addInstance", "error", err)
+				return err
+			}
 
 			// render config
-			ac.AddInstance(
-				"dummyConfig",
-				&catalog.Input{Object: &t, ObjectMeta: meta},
-			)
+			log.Debug("populateSchema render Config")
+			if err := ac.AddInstance(
+				"Config.config.yndd.io/v1alpha1",
+				&catalog.Input{Object: &t, ObjectMeta: meta, Data: "enable"},
+			); err != nil {
+				log.Debug("populateSchema addInstance", "error", err)
+				return err
+			}
 
 			// render state
-			ac.AddInstance(
-				statev1alpha1.StateGroupVersionKind.String(),
+			log.Debug("populateSchema render State")
+			if err := ac.AddInstance(
+				statev1alpha1.StateKindAPIVersion,
 				&catalog.Input{Object: &t, ObjectMeta: meta},
-			)
-
+			); err != nil {
+				log.Debug("populateSchema addInstance", "error", err)
+				return err
+			}
 		}
 	}
 	// *** UPDATE SUBSCRIBER WITH CURRENT PATHS FROM STATE CR
@@ -236,6 +269,7 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// -> query NATS per target and see which links are needed (last per subject)
 
 	// perform diff and perform a transaction to the system
+	log.Debug("populateSchema Apply")
 	if err := ac.Apply(ctx); err != nil {
 		return err
 	}

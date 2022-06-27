@@ -51,7 +51,7 @@ type DefinitionDiscoveryRule struct {
 }
 
 type DefinitionRule struct {
-	NamespacedName string `json:"namespacedName"`
+	Name string `json:"name"`
 	// +kubebuilder:default=false
 	DigitalTwin bool `json:"digitalTwin,omitempty"`
 }

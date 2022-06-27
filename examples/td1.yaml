@@ -6,4 +6,4 @@ metadata:
 spec:
   properties:
     discoveryRules:
-    - namespacedName: dr1
+    - name: dr1

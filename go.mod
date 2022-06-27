@@ -6,7 +6,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.6.0
 	github.com/spf13/cobra v1.4.0
-	github.com/yndd/app-runtime v0.0.17
+	github.com/yndd/app-runtime v0.0.32
 	github.com/yndd/ndd-core v0.2.22
 	github.com/yndd/ndd-runtime v0.5.19
 	github.com/yndd/nddr-org-registry v0.0.13
@@ -18,7 +18,8 @@ require (
 )
 
 require (
-	github.com/yndd/catalog v0.0.11
+	github.com/yndd/catalog v0.0.21
+	github.com/yndd/config-srl v0.0.3
 	github.com/yndd/discovery v0.0.0-20220609164715-6c15d31e632f
 	github.com/yndd/state v0.0.2
 )
@@ -75,7 +76,6 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/yndd/cache v0.0.8 // indirect
-	github.com/yndd/config-srl v0.0.2 // indirect
 	github.com/yndd/nddo-runtime v0.0.85 // indirect
 	github.com/yndd/registrator v0.0.20 // indirect
 	github.com/yndd/ygotsrl v0.0.2 // indirect

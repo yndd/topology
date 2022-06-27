@@ -11,6 +11,12 @@ spec:
     - apiGroups: [target.yndd.io]
       resources: [targets, targets/status]
       verbs: [get, list, watch, update, patch, create, delete]
+    - apiGroups: [state.yndd.io]
+      resources: [states, states/status]
+      verbs: [get, list, watch, update, patch, create, delete]
+    - apiGroups: [config.yndd.io]
+      resources: [srlconfigs, srlconfigs/status]
+      verbs: [get, list, watch, update, patch, create, delete]
     containers:
     - container:
         name: kube-rbac-proxy
@@ -29,3 +35,4 @@ spec:
       extras:
       - {name: metrics, service: true, port: 8443, target-port: 443}
       - {name: profiler, volume: true}
+      - {name: fnresults, volume: true}

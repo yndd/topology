@@ -88,8 +88,8 @@ func (e *EnqueueRequestForAllTopologies) add(obj runtime.Object, queue adder) {
 		nodeDnsName, _ := odns.Name2OdnsTopo(toponode.GetName()).GetFullOdaName()
 		if nodeDnsName == watchDnsName {
 
-			crName := getCrName(&toponode)
-			e.handler.ResetSpeedy(crName)
+			//crName := getCrName(&toponode)
+			//e.handler.ResetSpeedy(crName)
 
 			queue.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 				Namespace: toponode.GetNamespace(),

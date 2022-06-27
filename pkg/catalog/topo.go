@@ -1,6 +1,8 @@
 package catalog
 
 import (
+	"strings"
+
 	"github.com/yndd/catalog"
 	_ "github.com/yndd/catalog/vendors/all"
 	"github.com/yndd/ndd-runtime/pkg/resource"
@@ -15,13 +17,13 @@ func init() {
 
 var Entries = map[catalog.Key]catalog.Entry{
 	{
-		Name:      "configure_definition",
-		Version:   "latest",
-		Vendor:    targetv1.VendorTypeUnknown,
-		Platform:  "",
-		SwVersion: "",
+		Name:    "configure_definition",
+		Version: "latest",
+		//Vendor:    targetv1.VendorTypeUnknown,
+		//Platform:  "",
+		//SwVersion: "",
 	}: {
-		RenderRn: ConfigureDefinition,
+		RenderFn: ConfigureDefinition,
 		ResourceFn: func() resource.Managed {
 			return &topov1alpha1.Definition{}
 		},
@@ -31,13 +33,13 @@ var Entries = map[catalog.Key]catalog.Entry{
 		MergeFn: nil, // TODO
 	},
 	{
-		Name:      "configure_template",
-		Version:   "latest",
-		Vendor:    targetv1.VendorTypeUnknown,
-		Platform:  "",
-		SwVersion: "",
+		Name:    "configure_template",
+		Version: "latest",
+		//Vendor:    targetv1.VendorTypeUnknown,
+		//Platform:  "",
+		//SwVersion: "",
 	}: {
-		RenderRn: ConfigureTemplate,
+		RenderFn: ConfigureTemplate,
 		ResourceFn: func() resource.Managed {
 			return &topov1alpha1.Template{}
 		},
@@ -47,13 +49,13 @@ var Entries = map[catalog.Key]catalog.Entry{
 		MergeFn: nil, // TODO
 	},
 	{
-		Name:      "configure_topology",
-		Version:   "latest",
-		Vendor:    targetv1.VendorTypeUnknown,
-		Platform:  "",
-		SwVersion: "",
+		Name:    "configure_topology",
+		Version: "latest",
+		//Vendor:    targetv1.VendorTypeUnknown,
+		//Platform:  "",
+		//SwVersion: "",
 	}: {
-		RenderRn: ConfigureTopology,
+		RenderFn: ConfigureTopology,
 		ResourceFn: func() resource.Managed {
 			return &topov1alpha1.Topology{}
 		},
@@ -63,13 +65,13 @@ var Entries = map[catalog.Key]catalog.Entry{
 		MergeFn: nil, // TODO
 	},
 	{
-		Name:      "configure_node",
-		Version:   "latest",
-		Vendor:    targetv1.VendorTypeUnknown,
-		Platform:  "",
-		SwVersion: "",
+		Name:    "configure_node",
+		Version: "latest",
+		//Vendor:    targetv1.VendorTypeUnknown,
+		//Platform:  "",
+		//SwVersion: "",
 	}: {
-		RenderRn: ConfigureNode,
+		RenderFn: ConfigureNode,
 		ResourceFn: func() resource.Managed {
 			return &topov1alpha1.Node{}
 		},
@@ -79,13 +81,13 @@ var Entries = map[catalog.Key]catalog.Entry{
 		MergeFn: nil, // TODO
 	},
 	{
-		Name:      "configure_link",
-		Version:   "latest",
-		Vendor:    targetv1.VendorTypeUnknown,
-		Platform:  "",
-		SwVersion: "",
+		Name:    "configure_link",
+		Version: "latest",
+		//Vendor:    targetv1.VendorTypeUnknown,
+		//Platform:  "",
+		//SwVersion: "",
 	}: {
-		RenderRn: ConfigureLink,
+		RenderFn: ConfigureLink,
 		ResourceFn: func() resource.Managed {
 			return &topov1alpha1.Link{}
 		},
@@ -106,10 +108,7 @@ func ConfigureTemplate(key catalog.Key, in *catalog.Input) (resource.Managed, er
 
 func ConfigureTopology(key catalog.Key, in *catalog.Input) (resource.Managed, error) {
 	return &topov1alpha1.Topology{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      in.ObjectMeta.Name,
-			Namespace: in.ObjectMeta.Namespace,
-		},
+		ObjectMeta: in.ObjectMeta,
 		Spec: topov1alpha1.TopologySpec{
 			Properties: &topov1alpha1.TopologyProperties{
 				Defaults: &topov1alpha1.TopologyDefaults{
@@ -139,11 +138,9 @@ func ConfigureNode(key catalog.Key, in *catalog.Input) (resource.Managed, error)
 	if err != nil {
 		return nil, err
 	}
+	in.ObjectMeta.Name = strings.Join([]string{in.ObjectMeta.Name, t.GetName()}, ".")
 	return &topov1alpha1.Node{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      in.ObjectMeta.Name, // how to do cr and target
-			Namespace: in.ObjectMeta.Namespace,
-		},
+		ObjectMeta: in.ObjectMeta,
 		Spec: topov1alpha1.NodeSpec{
 			Properties: &topov1alpha1.NodeProperties{
 				VendorType: t.GetDiscoveryInfo().VendorType,

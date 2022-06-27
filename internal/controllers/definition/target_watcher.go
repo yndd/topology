@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/ndd-runtime/pkg/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -91,8 +90,7 @@ func (e *EnqueueRequestForAllTargets) add(obj runtime.Object, queue adder) {
 	for _, td := range tdl.Items {
 		if td.Spec.Properties.DiscoveryRules != nil {
 			for _, dr := range td.Spec.Properties.DiscoveryRules {
-				namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
-				if namespace == cr.GetNamespace() && name == r {
+				if td.GetNamespace() == cr.GetNamespace() && dr.Name == r {
 					queue.Add(reconcile.Request{NamespacedName: types.NamespacedName{
 						Namespace: td.GetNamespace(),
 						Name:      td.GetName()}})

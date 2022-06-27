@@ -91,10 +91,10 @@ spec:
                         digitalTwin:
                           default: false
                           type: boolean
-                        namespacedName:
+                        name:
                           type: string
                       required:
-                      - namespacedName
+                      - name
                       type: object
                     type: array
                   templates:
@@ -103,10 +103,10 @@ spec:
                         digitalTwin:
                           default: false
                           type: boolean
-                        namespacedName:
+                        name:
                           type: string
                       required:
-                      - namespacedName
+                      - name
                       type: object
                     type: array
                 type: object

@@ -88,8 +88,8 @@ func (e *EnqueueRequestForAllTopologyLinks) delete(obj runtime.Object, queue add
 		//if topolink.GetTopologyName() == dd.GetTopologyName() {
 		linkDnsName, _ := odns.Name2OdnsTopo(topolink.GetName()).GetFullOdaName()
 		if linkDnsName == watchDnsName {
-			crName := getCrName(&topolink)
-			e.handler.ResetSpeedy(crName)
+			//crName := getCrName(&topolink)
+			//e.handler.ResetSpeedy(crName)
 			// if a logical link gets deleted, we need to see if there are other member links, so we reconcile
 			// all the links in the topology that are NOT logical links
 			// we get a small delete and add event of the logical link
