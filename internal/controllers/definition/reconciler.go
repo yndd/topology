@@ -232,35 +232,100 @@ func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition
 	log := r.log.WithValues("crName", crName)
 	log.Debug("createFabric...")
 
-	for n := uint32(0); n < tmpl.Spec.Properties.Fabric.Tier1.NodeNumber; n++ {
-		nodeNbr := n + 1
-		nodeName := fmt.Sprintf("superspine%d", nodeNbr)
-		log.Debug("create fabric node", "nodeName", nodeName)
-	}
+	totalPodNum := uint32(0)
+	totalTier1Num := tmpl.Spec.Properties.Fabric.Tier1.NodeNumber
+	totalTier2Info := map[uint32][]*topov1alpha1.FabricTierVendorInfo{}
 
 	// n is number of pod definitions
 	for p, pod := range tmpl.Spec.Properties.Fabric.Pods {
+		totalPodNum += pod.PodNumber
 		// i is the number of pods in a definition
 		for i := uint32(0); i < pod.PodNumber; i++ {
-			podNbr := uint32(p) + i + 1
+			tier3NodePerPod := []*topov1alpha1.FabricTierVendorInfo{}
+			totalTier2Info[(uint32(p)+1)*(i+1)] = []*topov1alpha1.FabricTierVendorInfo{}
 			// kind is tier 2 or tier3
 			for kind, tier := range pod.Tiers {
+				vendorNum := len(tier.VendorInfo)
 				switch kind {
 				case "tier3":
 					for n := uint32(0); n < tier.NodeNumber; n++ {
-						nodeNbr := n + 1
-						nodeName := fmt.Sprintf("pod%d-leaf%d", podNbr, nodeNbr)
-						log.Debug("create fabric node", "nodeName", nodeName)
+						vendorIdx := n % uint32(vendorNum)
+						tier3NodePerPod = append(tier3NodePerPod, tier.VendorInfo[vendorIdx])
+
+						//nodeNbr := n + 1
+						//nodeName := fmt.Sprintf("pod%d-leaf%d", totalPodNum, nodeNbr)
+						//log.Debug("create fabric node", "nodeName", nodeName)
+						node := renderFabricNode(cr, &FabricNodeInfo{
+							Position:   topov1alpha1.PositionLeaf,
+							NodeIndex:  n + 1,
+							PodIndex:   (uint32(p) + 1) * (i + 1),
+							VendorInfo: tier.VendorInfo[vendorIdx],
+						})
+						if err := r.client.Apply(ctx, node); err != nil {
+							return err
+						}
 					}
 				case "tier2":
+
 					for n := uint32(0); n < tier.NodeNumber; n++ {
-						nodeNbr := n + 1
-						nodeName := fmt.Sprintf("pod%d-spine%d", podNbr, nodeNbr)
-						log.Debug("create fabric node", "nodeName", nodeName)
+						vendorIdx := n % uint32(vendorNum)
+						totalTier2Info[(uint32(p)+1)*(i+1)] = append(totalTier2Info[(uint32(p)+1)*(i+1)],
+							tier.VendorInfo[vendorIdx])
+						//nodeNbr := n + 1
+						//nodeName := fmt.Sprintf("pod%d-spine%d", totalPodNum, nodeNbr)
+						//log.Debug("create fabric node", "nodeName", nodeName)
+
+						node := renderFabricNode(cr, &FabricNodeInfo{
+							Position:   topov1alpha1.PositionSpine,
+							NodeIndex:  n + 1,
+							PodIndex:   (uint32(p) + 1) * (i + 1),
+							VendorInfo: tier.VendorInfo[vendorIdx],
+						})
+						if err := r.client.Apply(ctx, node); err != nil {
+							return err
+						}
 					}
 				default:
 					return fmt.Errorf("wrong kind in the template definition: %s, value: %s, expected tier2 or tier3", tmpl.GetNamespacedName(), kind)
 				}
+			}
+
+			// TODO vendorInfo
+			for n := range totalTier2Info[(uint32(p)+1)*(i+1)] {
+				for m := range tier3NodePerPod {
+					tier2NodeNbr := n + 1
+					tier3NodeNbr := m + 1
+					linkName := fmt.Sprintf("pod%d-spine%d-int-1/%d-leaf%d-int-1/%d", totalPodNum, tier2NodeNbr, 1+m, tier3NodeNbr, tier2NodeNbr+26)
+					log.Debug("create link", "linkName", linkName)
+				}
+			}
+		}
+	}
+
+	// superspine/backbone
+	// TODO vendorInfo
+	for n := uint32(0); n < totalTier1Num; n++ {
+		nodeNbr := n + 1
+		nodeName := fmt.Sprintf("superspine%d", nodeNbr)
+		log.Debug("create fabric node", "nodeName", nodeName)
+
+		vendorIdx := n % uint32(len(tmpl.Spec.Properties.Fabric.Tier1.VendorInfo))
+		node := renderFabricNode(cr, &FabricNodeInfo{
+			Position:   topov1alpha1.PositionSuperspine,
+			NodeIndex:  n + 1,
+			VendorInfo: tmpl.Spec.Properties.Fabric.Tier1.VendorInfo[vendorIdx],
+		})
+		if err := r.client.Apply(ctx, node); err != nil {
+			return err
+		}
+		actualTier2 := 0
+		for p, tier2PodInfo := range totalTier2Info {
+			for m := range tier2PodInfo {
+				tier1NodeNbr := n + 1
+				tier2NodeNbr := m + 1
+				actualTier2++
+				linkName := fmt.Sprintf("superspine%d-int-1/%d-pod%d-spine%d-int-1/%d", tier1NodeNbr, actualTier2, p, tier2NodeNbr, tier1NodeNbr+26)
+				log.Debug("create link", "linkName", linkName)
 			}
 		}
 	}

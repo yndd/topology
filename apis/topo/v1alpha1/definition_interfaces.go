@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"strings"
 
+	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	//"github.com/yndd/ndd_runtime/pkg/resource"
 	//"sigs.k8s.io/controller-runtime/pkg/client"
@@ -117,4 +118,20 @@ func (x *Definition) SetRootPaths(rootPaths []string) {
 
 func (x *Definition) GetNamespacedName() string {
 	return strings.Join([]string{x.Namespace, x.Name}, "/")
+}
+
+func (x *Definition) GetOrganization() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetOrganization()
+}
+
+func (x *Definition) GetDeployment() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetDeployment()
+}
+
+func (x *Definition) GetAvailabilityZone() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetAvailabilityZone()
+}
+
+func (x *Definition) GetTopologyName() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetTopologyName()
 }
