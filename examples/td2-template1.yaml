@@ -1,0 +1,26 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Template
+metadata:
+  name: tmpl1
+  namespace: ndd-system
+spec:
+  properties:
+    fabric:
+      tier1:
+        num: 4
+        vendorInfo:
+        - vendorType: NokiaSRL
+          platform: "IXR-D3"
+      pods:
+      - num: 2
+        tiers:
+          tier3:
+            num: 4
+            vendorInfo:
+            - vendorType: NokiaSRL
+              platform: "IXR-D3"
+          tier2:
+            num: 2
+            vendorInfo:
+            - vendorType: NokiaSRL
+              platform: "IXR-D3"

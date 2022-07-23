@@ -20,18 +20,58 @@ import (
 	"reflect"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	//targetv1alpha1pb "github.com/yndd/topology/gen/go/apis/topo/v1alpha1"
 )
 
+type SupportServers struct {
+	DnsServers []*string `json:"dnsServers,omitempty"`
+	NtPServers []*string `json:"ntpServers,omitempty"`
+}
+
+type TemplateSubnet struct {
+	IPSubnet       string `json:"ipSubnet,omitempty"`
+	SupportServers `json:"inline,omitempty"`
+}
+
+type Fabric struct {
+	// superspine
+	Tier1 *FabricTier  `json:"tier1,omitempty"`
+	Pods  []*FabricPod `json:"pods,omitempty"`
+}
+
+type FabricPod struct {
+	PodNumber uint32 `json:"num,omitempty"`
+	// tier3, tier2
+	Tiers map[string]*FabricTier `json:"tiers,omitempty"`
+}
+
+type FabricTier struct {
+	// list to support multiple vendors in a tier - typically criss-cross
+	VendorInfo []*FabricTierVendorInfo `json:"vendorInfo,omitempty"`
+	// number of nodes in the tier
+	NodeNumber uint32 `json:"num,omitempty"`
+	// oversubscription ratio
+	Oversubscription string `json:"oversubscription,omitempty"`
+}
+
+type FabricTierVendorInfo struct {
+	Platform   string              `json:"platform,omitempty"`
+	VendorType targetv1.VendorType `json:"vendorType,omitempty"`
+}
+
 // TemplateProperties define the properties of the Template
 type TemplateProperties struct {
+	SupportServers `json:"inline,omitempty"`
+	Subnet         *TemplateSubnet `json:"subnet,omitempty"`
+	Fabric         *Fabric         `json:"fabric,omitempty"`
 }
 
 // TemplateSpec struct
 type TemplateSpec struct {
-	nddv1.ResourceSpec `json:",inline"`
+	nddv1.ResourceSpec `json:",inline,omitempty"`
 	// Properties define the properties of the Template
 	Properties TemplateProperties `json:"properties,omitempty"`
 }
@@ -59,8 +99,8 @@ type Template struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	//Spec   targetv1alpha1pb.TemplateSpec   `json:"spec,omitempty"`
-	//Status targetv1alpha1pb.TemplateStatus `json:"status,omitempty"`
+	Spec   TemplateSpec   `json:"spec,omitempty"`
+	Status TemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

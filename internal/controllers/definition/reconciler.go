@@ -33,6 +33,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/shared"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -148,11 +149,29 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 		return err
 	}
 
+	// per template create the fabric
+	for _, dt := range cr.Spec.Properties.Templates {
+		log.Debug("NamespacedName input", "dt.NamespacedName", dt.NamespacedName)
+		name, namespace := meta.NamespacedName(dt.NamespacedName).GetNameAndNamespace()
+		log.Debug("NamespacedName output", "namespace", namespace, "name", name)
+		tmpl := &topov1alpha1.Template{}
+		if err := r.client.Get(ctx, types.NamespacedName{
+			Namespace: namespace,
+			Name:      name,
+		}, tmpl); err != nil {
+			// template not defined
+			return err
+		}
+		if err := r.createFabric(ctx, cr, tmpl); err != nil {
+			return err
+		}
+	}
+
 	// +++++ BREAKDOWN  +++++
 	// per discovery rule check if the discovery rule matches within the namespace
 	for _, dr := range cr.Spec.Properties.DiscoveryRules {
 
-		namespace, name := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
+		name, namespace := meta.NamespacedName(dr.NamespacedName).GetNameAndNamespace()
 		opts := []client.ListOption{
 			client.MatchingLabels{LabelKeyDiscoveryRule: name},
 			client.InNamespace(namespace),
@@ -204,6 +223,47 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 	// **** FEEDBACK TO TOP LEVEL                        *****
 	// **** SUBSCRIPTION WITH HANDLER (CREATE LINK/NODE) *****
 	// **** TRANSACTION                                  *****
+
+	return nil
+}
+
+func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition, tmpl *topov1alpha1.Template) error {
+	crName := cr.GetNamespacedName()
+	log := r.log.WithValues("crName", crName)
+	log.Debug("createFabric...")
+
+	for n := uint32(0); n < tmpl.Spec.Properties.Fabric.Tier1.NodeNumber; n++ {
+		nodeNbr := n + 1
+		nodeName := fmt.Sprintf("superspine%d", nodeNbr)
+		log.Debug("create fabric node", "nodeName", nodeName)
+	}
+
+	// n is number of pod definitions
+	for p, pod := range tmpl.Spec.Properties.Fabric.Pods {
+		// i is the number of pods in a definition
+		for i := uint32(0); i < pod.PodNumber; i++ {
+			podNbr := uint32(p) + i + 1
+			// kind is tier 2 or tier3
+			for kind, tier := range pod.Tiers {
+				switch kind {
+				case "tier3":
+					for n := uint32(0); n < tier.NodeNumber; n++ {
+						nodeNbr := n + 1
+						nodeName := fmt.Sprintf("pod%d-leaf%d", podNbr, nodeNbr)
+						log.Debug("create fabric node", "nodeName", nodeName)
+					}
+				case "tier2":
+					for n := uint32(0); n < tier.NodeNumber; n++ {
+						nodeNbr := n + 1
+						nodeName := fmt.Sprintf("pod%d-spine%d", podNbr, nodeNbr)
+						log.Debug("create fabric node", "nodeName", nodeName)
+					}
+				default:
+					return fmt.Errorf("wrong kind in the template definition: %s, value: %s, expected tier2 or tier3", tmpl.GetNamespacedName(), kind)
+				}
+			}
+		}
+	}
 
 	return nil
 }

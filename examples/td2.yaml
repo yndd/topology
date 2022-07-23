@@ -1,0 +1,9 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Definition
+metadata:
+  name: nokia.region1.fabric2
+  namespace: ndd-system
+spec:
+  properties:
+    templates:
+    - namespacedName: ndd-system/tmpl1
