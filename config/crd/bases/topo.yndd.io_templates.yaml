@@ -85,6 +85,68 @@ spec:
               properties:
                 description: Properties define the properties of the Template
                 properties:
+                  fabric:
+                    properties:
+                      pod:
+                        items:
+                          properties:
+                            num:
+                              format: int32
+                              type: integer
+                            tiers:
+                              items:
+                                properties:
+                                  kind:
+                                    description: tier3, tier2
+                                    type: string
+                                  num:
+                                    description: number of nodes in the tier
+                                    format: int32
+                                    type: integer
+                                  oversubscription:
+                                    description: oversubscription ratio
+                                    type: string
+                                  vendorInfo:
+                                    description: list to support multiple vendors
+                                      in a tier - typically criss-cross
+                                    items:
+                                      properties:
+                                        platform:
+                                          type: string
+                                        vendorType:
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              type: array
+                          type: object
+                        type: array
+                      tier1:
+                        description: superspine
+                        properties:
+                          kind:
+                            description: tier3, tier2
+                            type: string
+                          num:
+                            description: number of nodes in the tier
+                            format: int32
+                            type: integer
+                          oversubscription:
+                            description: oversubscription ratio
+                            type: string
+                          vendorInfo:
+                            description: list to support multiple vendors in a tier
+                              - typically criss-cross
+                            items:
+                              properties:
+                                platform:
+                                  type: string
+                                vendorType:
+                                  type: string
+                              type: object
+                            type: array
+                        type: object
+                    type: object
                   inline:
                     properties:
                       dnsServers:

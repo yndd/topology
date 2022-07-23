@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	//targetv1alpha1pb "github.com/yndd/topology/gen/go/apis/topo/v1alpha1"
@@ -35,10 +36,38 @@ type TemplateSubnet struct {
 	SupportServers `json:"inline"`
 }
 
+type Fabric struct {
+	// superspine
+	Tier1 *FabricTier  `json:"tier1,omitempty"`
+	Pods  []*FabricPod `json:"pod,omitempty"`
+}
+
+type FabricPod struct {
+	PodNumber uint32        `json:"num,omitempty"`
+	Tiers     []*FabricTier `json:"tiers,omitempty"`
+}
+
+type FabricTier struct {
+	// tier3, tier2
+	Kind string `json:"kind,omitempty"`
+	// list to support multiple vendors in a tier - typically criss-cross
+	VendorInfo []*FabricTierVendorInfo `json:"vendorInfo,omitempty"`
+	// number of nodes in the tier
+	NodeNumber uint32 `json:"num,omitempty"`
+	// oversubscription ratio
+	Oversubscription string `json:"oversubscription,omitempty"`
+}
+
+type FabricTierVendorInfo struct {
+	Platform   string              `json:"platform,omitempty"`
+	VendorType targetv1.VendorType `json:"vendorType,omitempty"`
+}
+
 // TemplateProperties define the properties of the Template
 type TemplateProperties struct {
 	SupportServers `json:"inline"`
 	Subnet         *TemplateSubnet `json:"subnet,omitempty"`
+	Fabric         *Fabric         `json:"fabric,omitempty"`
 }
 
 // TemplateSpec struct

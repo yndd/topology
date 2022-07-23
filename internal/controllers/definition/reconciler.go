@@ -263,16 +263,15 @@ func (r *applogic) populateSchema(ctx context.Context, mr resource.Managed) erro
 			}
 		}
 	}
-	// *** UPDATE SUBSCRIBER WITH CURRENT PATHS FROM STATE CR
-
-	// *** LOOK AT LINK STATE FROM NATS/CACHE
-	// -> query NATS per target and see which links are needed (last per subject)
-
 	// perform diff and perform a transaction to the system
 	log.Debug("populateSchema Apply")
 	if err := ac.Apply(ctx); err != nil {
 		return err
 	}
+
+	// *** UPDATE SUBSCRIBER WITH CURRENT PATHS FROM STATE CR
+	// *** LOOK AT LINK STATE FROM NATS/CACHE
+	// -> query NATS per target and see which links are needed (last per subject)
 
 	return nil
 }
