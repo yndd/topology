@@ -121,17 +121,18 @@ func (x *Definition) GetNamespacedName() string {
 }
 
 func (x *Definition) GetOrganization() string {
-	return odns.Name2OdnsTopoResource(x.GetName()).GetOrganization()
+
+	return odns.Name2OdnsTopoResource(x.GetName() + ".dummy").GetOrganization()
 }
 
 func (x *Definition) GetDeployment() string {
-	return odns.Name2OdnsTopoResource(x.GetName()).GetDeployment()
+	return odns.Name2OdnsTopoResource(x.GetName() + ".dummy").GetDeployment()
 }
 
 func (x *Definition) GetAvailabilityZone() string {
-	return odns.Name2OdnsTopoResource(x.GetName()).GetAvailabilityZone()
+	return odns.Name2OdnsTopoResource(x.GetName() + ".dummy").GetAvailabilityZone()
 }
 
 func (x *Definition) GetTopologyName() string {
-	return odns.Name2OdnsTopoResource(x.GetName()).GetTopologyName()
+	return odns.Name2OdnsTopoResource(x.GetName() + ".dummy").GetTopologyName()
 }

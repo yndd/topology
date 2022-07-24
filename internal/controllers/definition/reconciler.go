@@ -305,9 +305,9 @@ func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition
 	// superspine/backbone
 	// TODO vendorInfo
 	for n := uint32(0); n < totalTier1Num; n++ {
-		nodeNbr := n + 1
-		nodeName := fmt.Sprintf("superspine%d", nodeNbr)
-		log.Debug("create fabric node", "nodeName", nodeName)
+		//nodeNbr := n + 1
+		//nodeName := fmt.Sprintf("superspine%d", nodeNbr)
+		//log.Debug("create fabric node", "nodeName", nodeName)
 
 		vendorIdx := n % uint32(len(tmpl.Spec.Properties.Fabric.Tier1.VendorInfo))
 		node := renderFabricNode(cr, &FabricNodeInfo{
