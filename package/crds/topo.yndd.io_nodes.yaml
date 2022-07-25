@@ -31,10 +31,10 @@ spec:
     - jsonPath: .status.oda[?(@.key=='deployment')].value
       name: DEP
       type: string
-    - jsonPath: .status.oda[?(@.key=='availability-zone')].value
+    - jsonPath: .status.oda[?(@.key=='availabilityZone')].value
       name: AZ
       type: string
-    - jsonPath: .status.topology-name
+    - jsonPath: .status.oda[?(@.key=='resourceName')].value
       name: TOPO
       type: string
     - jsonPath: .spec.node.kind-name

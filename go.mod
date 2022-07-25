@@ -8,7 +8,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/yndd/app-runtime v0.0.6
 	github.com/yndd/ndd-core v0.2.21
-	github.com/yndd/ndd-runtime v0.5.18
+	github.com/yndd/ndd-runtime v0.5.20
 	github.com/yndd/nddr-org-registry v0.0.13
 	github.com/yndd/target v0.0.100
 	k8s.io/api v0.24.1

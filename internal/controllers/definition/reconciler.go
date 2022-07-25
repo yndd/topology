@@ -232,103 +232,111 @@ func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition
 	log := r.log.WithValues("crName", crName)
 	log.Debug("createFabric...")
 
-	totalPodNum := uint32(0)
-	totalTier1Num := tmpl.Spec.Properties.Fabric.Tier1.NodeNumber
-	totalTier2Info := map[uint32][]*topov1alpha1.FabricTierVendorInfo{}
-
-	// n is number of pod definitions
-	for p, pod := range tmpl.Spec.Properties.Fabric.Pods {
-		totalPodNum += pod.PodNumber
-		// i is the number of pods in a definition
-		for i := uint32(0); i < pod.PodNumber; i++ {
-			tier3NodePerPod := []*topov1alpha1.FabricTierVendorInfo{}
-			totalTier2Info[(uint32(p)+1)*(i+1)] = []*topov1alpha1.FabricTierVendorInfo{}
-			// kind is tier 2 or tier3
-			for kind, tier := range pod.Tiers {
-				vendorNum := len(tier.VendorInfo)
-				switch kind {
-				case "tier3":
-					for n := uint32(0); n < tier.NodeNumber; n++ {
-						vendorIdx := n % uint32(vendorNum)
-						tier3NodePerPod = append(tier3NodePerPod, tier.VendorInfo[vendorIdx])
-
-						//nodeNbr := n + 1
-						//nodeName := fmt.Sprintf("pod%d-leaf%d", totalPodNum, nodeNbr)
-						//log.Debug("create fabric node", "nodeName", nodeName)
-						node := renderFabricNode(cr, &FabricNodeInfo{
-							Position:   topov1alpha1.PositionLeaf,
-							NodeIndex:  n + 1,
-							PodIndex:   (uint32(p) + 1) * (i + 1),
-							VendorInfo: tier.VendorInfo[vendorIdx],
-						})
-						if err := r.client.Apply(ctx, node); err != nil {
-							return err
-						}
-					}
-				case "tier2":
-
-					for n := uint32(0); n < tier.NodeNumber; n++ {
-						vendorIdx := n % uint32(vendorNum)
-						totalTier2Info[(uint32(p)+1)*(i+1)] = append(totalTier2Info[(uint32(p)+1)*(i+1)],
-							tier.VendorInfo[vendorIdx])
-						//nodeNbr := n + 1
-						//nodeName := fmt.Sprintf("pod%d-spine%d", totalPodNum, nodeNbr)
-						//log.Debug("create fabric node", "nodeName", nodeName)
-
-						node := renderFabricNode(cr, &FabricNodeInfo{
-							Position:   topov1alpha1.PositionSpine,
-							NodeIndex:  n + 1,
-							PodIndex:   (uint32(p) + 1) * (i + 1),
-							VendorInfo: tier.VendorInfo[vendorIdx],
-						})
-						if err := r.client.Apply(ctx, node); err != nil {
-							return err
-						}
-					}
-				default:
-					return fmt.Errorf("wrong kind in the template definition: %s, value: %s, expected tier2 or tier3", tmpl.GetNamespacedName(), kind)
-				}
-			}
-
-			// TODO vendorInfo
-			for n := range totalTier2Info[(uint32(p)+1)*(i+1)] {
-				for m := range tier3NodePerPod {
-					tier2NodeNbr := n + 1
-					tier3NodeNbr := m + 1
-					linkName := fmt.Sprintf("pod%d-spine%d-int-1/%d-leaf%d-int-1/%d", totalPodNum, tier2NodeNbr, 1+m, tier3NodeNbr, tier2NodeNbr+26)
-					log.Debug("create link", "linkName", linkName)
-				}
-			}
-		}
+	f, err := topov1alpha1.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric)
+	if err != nil {
+		return err
 	}
-
-	// superspine/backbone
-	// TODO vendorInfo
-	for n := uint32(0); n < totalTier1Num; n++ {
-		//nodeNbr := n + 1
-		//nodeName := fmt.Sprintf("superspine%d", nodeNbr)
-		//log.Debug("create fabric node", "nodeName", nodeName)
-
-		vendorIdx := n % uint32(len(tmpl.Spec.Properties.Fabric.Tier1.VendorInfo))
-		node := renderFabricNode(cr, &FabricNodeInfo{
-			Position:   topov1alpha1.PositionSuperspine,
-			NodeIndex:  n + 1,
-			VendorInfo: tmpl.Spec.Properties.Fabric.Tier1.VendorInfo[vendorIdx],
-		})
+	for _, fn := range f.GetFabricNodes() {
+		node := renderFabricNode(cr, fn)
 		if err := r.client.Apply(ctx, node); err != nil {
 			return err
 		}
-		actualTier2 := 0
-		for p, tier2PodInfo := range totalTier2Info {
-			for m := range tier2PodInfo {
-				tier1NodeNbr := n + 1
-				tier2NodeNbr := m + 1
-				actualTier2++
-				linkName := fmt.Sprintf("superspine%d-int-1/%d-pod%d-spine%d-int-1/%d", tier1NodeNbr, actualTier2, p, tier2NodeNbr, tier1NodeNbr+26)
-				log.Debug("create link", "linkName", linkName)
-			}
-		}
 	}
 
+	for _, fl := range f.GetFabricLinks() {
+		link := renderFabricLink(cr, fl)
+		if err := r.client.Apply(ctx, link); err != nil {
+			return err
+		}
+
+	}
+
+	/*
+		// initialize to render later the superspine-spine layer
+		tier1Num := tmpl.Spec.Properties.Fabric.Tier1.NodeNumber
+		tier2Nodes := make([]topov1alpha1.FabricNode, 0)
+
+		// render/create the leaf-spine per pod
+		// p is number of pod definitions
+		for p, pod := range tmpl.Spec.Properties.Fabric.Pods {
+			//totalPodNum += pod.PodNumber
+			// i is the number of pods in a definition
+			for i := uint32(0); i < pod.PodNumber; i++ {
+				podIndex := (uint32(p) + 1) * (i + 1)
+				tier3NodePerPod := make([]topov1alpha1.FabricNode, 0)
+				tier2NodePerPod := make([]topov1alpha1.FabricNode, 0)
+				// kind is tier 2 or tier3
+				for kind, tier := range pod.Tiers {
+					vendorNum := len(tier.VendorInfo)
+					if kind != "tier3" && kind != "tier2" {
+						return fmt.Errorf("wrong kind in the template definition: %s, value: %s, expected tier2 or tier3", tmpl.GetNamespacedName(), kind)
+					}
+					for n := uint32(0); n < tier.NodeNumber; n++ {
+						vendorIdx := n % uint32(vendorNum)
+
+						var fabricNode topov1alpha1.FabricNode
+
+						if kind == "tier3" {
+							fabricNode = topov1alpha1.NewLeafFabricNode(podIndex, n+1, tier.VendorInfo[vendorIdx])
+							tier3NodePerPod = append(tier3NodePerPod, fabricNode)
+						} else {
+							fabricNode = topov1alpha1.NewSpineFabricNode(podIndex, n+1, tier.VendorInfo[vendorIdx])
+							tier2NodePerPod = append(tier2NodePerPod, fabricNode)
+							tier2Nodes = append(tier2Nodes, fabricNode)
+						}
+
+						// render/create the leaf or spine nodes
+						node := renderFabricNode(cr, fabricNode)
+						if err := r.client.Apply(ctx, node); err != nil {
+							return err
+						}
+					}
+				}
+
+				// render/create the link information of the leaf-spine pod
+				for n, tier2Node := range tier2NodePerPod {
+					for m, tier3Node := range tier3NodePerPod {
+
+						tier2NodeIndex := uint32(n) + 1
+						tier3NodeIndex := uint32(m) + 1
+						tier2Node.AddInterfaceName(tier3NodeIndex)
+						tier3Node.AddInterfaceNameWithPlatformOffset(tier2NodeIndex)
+
+						l := renderFabricLink(cr, tier2Node, tier3Node)
+						if err := r.client.Apply(ctx, l); err != nil {
+							return err
+						}
+					}
+				}
+			}
+		}
+
+		// render/create superspine <-> spine/backbone
+		for n := uint32(0); n < tier1Num; n++ {
+			vendorIdx := n % uint32(len(tmpl.Spec.Properties.Fabric.Tier1.VendorInfo))
+			tier1NodeIndex := n + 1
+			tier1Node := topov1alpha1.NewSuperspineFabricNode(tier1NodeIndex, tmpl.Spec.Properties.Fabric.Tier1.VendorInfo[vendorIdx])
+
+			// render/create the superspine nodes
+			node := renderFabricNode(cr, tier1Node)
+			if err := r.client.Apply(ctx, node); err != nil {
+				return err
+			}
+			actualTier2 := 0
+
+			// render/create the superspine - spine links
+			for _, tier2Node := range tier2Nodes {
+				actualTier2++
+
+				tier1Node.AddInterfaceName(uint32(actualTier2))
+				tier2Node.AddInterfaceNameWithPlatformOffset(tier1NodeIndex)
+
+				l := renderFabricLink(cr, tier1Node, tier2Node)
+				if err := r.client.Apply(ctx, l); err != nil {
+					return err
+				}
+			}
+		}
+	*/
 	return nil
 }

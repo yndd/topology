@@ -36,19 +36,19 @@ type TemplateSubnet struct {
 	SupportServers `json:"inline,omitempty"`
 }
 
-type Fabric struct {
+type FabricTemplate struct {
 	// superspine
-	Tier1 *FabricTier  `json:"tier1,omitempty"`
-	Pods  []*FabricPod `json:"pods,omitempty"`
+	Tier1 *FabricTemplateTier  `json:"tier1,omitempty"`
+	Pods  []*FabricTemplatePod `json:"pods,omitempty"`
 }
 
-type FabricPod struct {
+type FabricTemplatePod struct {
 	PodNumber uint32 `json:"num,omitempty"`
 	// tier3, tier2
-	Tiers map[string]*FabricTier `json:"tiers,omitempty"`
+	Tiers map[string]*FabricTemplateTier `json:"tiers,omitempty"`
 }
 
-type FabricTier struct {
+type FabricTemplateTier struct {
 	// list to support multiple vendors in a tier - typically criss-cross
 	VendorInfo []*FabricTierVendorInfo `json:"vendorInfo,omitempty"`
 	// number of nodes in the tier
@@ -66,7 +66,7 @@ type FabricTierVendorInfo struct {
 type TemplateProperties struct {
 	SupportServers `json:"inline,omitempty"`
 	Subnet         *TemplateSubnet `json:"subnet,omitempty"`
-	Fabric         *Fabric         `json:"fabric,omitempty"`
+	Fabric         *FabricTemplate `json:"fabric,omitempty"`
 }
 
 // TemplateSpec struct
@@ -79,7 +79,7 @@ type TemplateSpec struct {
 // A TemplateStatus represents the observed state of a Template.
 type TemplateStatus struct {
 	nddv1.ResourceStatus `json:",inline"`
-	//TopologyName            *string               `json:"topology-name,omitempty"`
+	TopologyName         string `json:"topology-name,omitempty"`
 	//Topology                *NddrTopologyTopology `json:"topology,omitempty"`
 }
 
@@ -91,8 +91,8 @@ type TemplateStatus struct {
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
 // +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.oda[?(@.key=='organization')].value"
 // +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda[?(@.key=='deployment')].value"
-// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availability-zone')].value"
-// +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
+// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availabilityZone')].value"
+// +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.oda[?(@.key=='resourceName')].value"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
 type Template struct {

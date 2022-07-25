@@ -119,7 +119,7 @@ func buildLogicalTopologyLink(cr *topov1alpha1.Link) *topov1alpha1.Link {
 			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.LinkGroupVersionKind))},
 		},
 		Spec: topov1alpha1.LinkSpec{
-			Properties: topov1alpha1.LinkProperties{
+			Properties: &topov1alpha1.LinkProperties{
 				Endpoints: []*topov1alpha1.Endpoints{
 					{
 						NodeName:      nodeNameA,

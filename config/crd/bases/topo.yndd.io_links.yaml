@@ -31,34 +31,34 @@ spec:
     - jsonPath: .status.oda[?(@.key=='deployment')].value
       name: DEP
       type: string
-    - jsonPath: .status.oda[?(@.key=='availability-zone')].value
+    - jsonPath: .status.oda[?(@.key=='availabilityZone')].value
       name: AZ
       type: string
-    - jsonPath: .status.topology-name
+    - jsonPath: .status.oda[?(@.key=='resourceName')].value
       name: TOPO
       type: string
-    - jsonPath: .spec.link.tag[?(@.key=='lag')].value
+    - jsonPath: .spec.link.properties.lag
       name: LAG
       type: string
-    - jsonPath: .spec.link.tag[?(@.key=='lag-member')].value
+    - jsonPath: .spec.link.properties.lagmember
       name: MEMBER
       type: string
-    - jsonPath: .spec.link.endpoints[0].node-name
+    - jsonPath: .spec.link.endpoints[0].nodeName
       name: NODE-EPA
       type: string
-    - jsonPath: .spec.link.endpoints[0].interface-name
+    - jsonPath: .spec.link.endpoints[0].interfaceName
       name: ITFCE-EPA
       type: string
-    - jsonPath: .spec.link.endpoints[0].tag[?(@.key=='multihoming')].value
+    - jsonPath: .spec.link.endpoints[0].tag[?(@.key=='multiHoming')].value
       name: MH-EPA
       type: string
-    - jsonPath: .spec.link.endpoints[1].node-name
+    - jsonPath: .spec.link.endpoints[1].nodeName
       name: NODE-EPB
       type: string
-    - jsonPath: .spec.link.endpoints[1].interface-name
+    - jsonPath: .spec.link.endpoints[1].interfaceName
       name: ITFCE-EPB
       type: string
-    - jsonPath: .spec.link.endpoints[1].tag[?(@.key=='multihoming')].value
+    - jsonPath: .spec.link.endpoints[1].tag[?(@.key=='multiHoming')].value
       name: MH-EPB
       type: string
     - jsonPath: .metadata.creationTimestamp
@@ -143,6 +143,8 @@ spec:
                   kind:
                     type: string
                   lacp:
+                    type: boolean
+                  lag:
                     type: boolean
                   lagMember:
                     type: boolean

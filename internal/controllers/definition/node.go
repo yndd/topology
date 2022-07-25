@@ -17,10 +17,10 @@ limitations under the License.
 package definition
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
+	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
@@ -62,45 +62,57 @@ func renderNode(drName string, cr *topov1alpha1.Definition, t *targetv1.Target) 
 }
 
 type FabricNodeInfo struct {
-	Position   topov1alpha1.Position
-	NodeIndex  uint32 // relative number within the position, pod
-	PodIndex   uint32 // pod index
-	VendorInfo *topov1alpha1.FabricTierVendorInfo
+	Position      topov1alpha1.Position
+	NodeIndex     uint32 // relative number within the position, pod
+	PodIndex      uint32 // pod index
+	VendorInfo    *topov1alpha1.FabricTierVendorInfo
+	InterfaceName string
 }
 
-func renderFabricNode(cr *topov1alpha1.Definition, fabricNodeInfo *FabricNodeInfo) *topov1alpha1.Node { // nolint:interfacer,gocyclo
-	var nodeName string
+func renderFabricNode(cr *topov1alpha1.Definition, nodeInfo topov1alpha1.FabricNode) *topov1alpha1.Node { // nolint:interfacer,gocyclo
 	labels := map[string]string{
-		LabelKeyTopologyPosition:   string(fabricNodeInfo.Position),
-		LabelKeyTopologyNodeIndex:  strconv.Itoa(int(fabricNodeInfo.NodeIndex)),
-		LabelKeyTopologyVendorType: string(fabricNodeInfo.VendorInfo.VendorType),
-		LabelKeyTopologyPlatform:   string(fabricNodeInfo.VendorInfo.Platform),
+		LabelKeyTopologyPosition:   string(nodeInfo.GetPosition()),
+		LabelKeyTopologyNodeIndex:  strconv.Itoa(int(nodeInfo.GetNodeIndex())),
+		LabelKeyTopologyVendorType: string(nodeInfo.GetVendorType()),
+		LabelKeyTopologyPlatform:   nodeInfo.GetPlatform(),
 		LabelKeyOrganization:       cr.GetOrganization(),
 		LabelKeyDeployment:         cr.GetDeployment(),
 		LabelKeyAvailabilityZone:   cr.GetAvailabilityZone(),
 		LabelKeyTopology:           cr.GetTopologyName(),
 	}
-	if fabricNodeInfo.Position != topov1alpha1.PositionSuperspine {
-		nodeName = fmt.Sprintf("pod%d-%s%d", fabricNodeInfo.PodIndex, fabricNodeInfo.Position, fabricNodeInfo.NodeIndex)
-		labels[LabelKeyTopologyPodIndex] = strconv.Itoa(int(fabricNodeInfo.PodIndex))
-	} else {
-		nodeName = fmt.Sprintf("%s%d", fabricNodeInfo.Position, fabricNodeInfo.NodeIndex)
-
+	if nodeInfo.GetPosition() != topov1alpha1.PositionSuperspine {
+		labels[LabelKeyTopologyPodIndex] = strconv.Itoa(int(nodeInfo.GetPodIndex()))
 	}
 	return &topov1alpha1.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            strings.Join([]string{cr.GetName(), nodeName}, "."),
+			Name:            strings.Join([]string{cr.GetName(), nodeInfo.GetNodeName()}, "."),
 			Namespace:       cr.Namespace,
 			Labels:          labels,
 			OwnerReferences: []metav1.OwnerReference{meta.AsController(meta.TypedReferenceTo(cr, topov1alpha1.DefinitionGroupVersionKind))},
 		},
 		Spec: topov1alpha1.NodeSpec{
 			Properties: &topov1alpha1.NodeProperties{
-				VendorType: fabricNodeInfo.VendorInfo.VendorType,
-				Platform:   fabricNodeInfo.VendorInfo.Platform,
-				//Index:
-				Position: fabricNodeInfo.Position,
+				VendorType: nodeInfo.GetVendorType(),
+				Platform:   nodeInfo.GetPlatform(),
+				Position:   nodeInfo.GetPosition(),
+				//MacAddress: ,
+				//SerialNumber: ,
+				//ExpectedSWVersion: ,
+				//MgmtIPAddress: ,
+				//Index: ,
 				// Tags://
+			},
+		},
+		Status: topov1alpha1.NodeStatus{
+			ResourceStatus: nddv1.ResourceStatus{
+				OdaInfo: nddv1.OdaInfo{
+					Oda: map[string]string{
+						string(nddv1.OdaKindOrganization):    cr.GetOrganization(),
+						string(nddv1.OdaKindAvailabiityZone): cr.GetAvailabilityZone(),
+						string(nddv1.OdaKindDeployment):      cr.GetDeployment(),
+						string(nddv1.OdaKindResourceName):    cr.GetTopologyName(),
+					},
+				},
 			},
 		},
 	}

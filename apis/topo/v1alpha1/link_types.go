@@ -29,7 +29,7 @@ import (
 type LinkSpec struct {
 	nddv1.ResourceSpec `json:",inline"`
 	// Properties define the properties of the Topology
-	Properties LinkProperties `json:"properties,omitempty"`
+	Properties *LinkProperties `json:"properties,omitempty"`
 }
 
 // A LinkStatus represents the observed state of a Link.
@@ -42,6 +42,7 @@ type LinkProperties struct {
 	Endpoints []*Endpoints       `json:"endpoints,omitempty"`
 	LagMember bool               `json:"lagMember,omitempty"`
 	Lacp      bool               `json:"lacp,omitempty"`
+	Lag       bool               `json:"lag,omitempty"`
 	Kind      LinkKindProperties `json:"kind,omitempty"`
 	Tag       map[string]string  `json:"tag,omitempty"`
 }
@@ -91,16 +92,16 @@ const (
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
 // +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.oda[?(@.key=='organization')].value"
 // +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda[?(@.key=='deployment')].value"
-// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availability-zone')].value"
-// +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
-// +kubebuilder:printcolumn:name="LAG",type="string",JSONPath=".spec.link.tag[?(@.key=='lag')].value"
-// +kubebuilder:printcolumn:name="MEMBER",type="string",JSONPath=".spec.link.tag[?(@.key=='lag-member')].value"
-// +kubebuilder:printcolumn:name="NODE-EPA",type="string",JSONPath=".spec.link.endpoints[0].node-name"
-// +kubebuilder:printcolumn:name="ITFCE-EPA",type="string",JSONPath=".spec.link.endpoints[0].interface-name"
-// +kubebuilder:printcolumn:name="MH-EPA",type="string",JSONPath=".spec.link.endpoints[0].tag[?(@.key=='multihoming')].value"
-// +kubebuilder:printcolumn:name="NODE-EPB",type="string",JSONPath=".spec.link.endpoints[1].node-name"
-// +kubebuilder:printcolumn:name="ITFCE-EPB",type="string",JSONPath=".spec.link.endpoints[1].interface-name"
-// +kubebuilder:printcolumn:name="MH-EPB",type="string",JSONPath=".spec.link.endpoints[1].tag[?(@.key=='multihoming')].value"
+// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availabilityZone')].value"
+// +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.oda[?(@.key=='resourceName')].value"
+// +kubebuilder:printcolumn:name="LAG",type="string",JSONPath=".spec.link.properties.lag"
+// +kubebuilder:printcolumn:name="MEMBER",type="string",JSONPath=".spec.link.properties.lagmember"
+// +kubebuilder:printcolumn:name="NODE-EPA",type="string",JSONPath=".spec.link.endpoints[0].nodeName"
+// +kubebuilder:printcolumn:name="ITFCE-EPA",type="string",JSONPath=".spec.link.endpoints[0].interfaceName"
+// +kubebuilder:printcolumn:name="MH-EPA",type="string",JSONPath=".spec.link.endpoints[0].tag[?(@.key=='multiHoming')].value"
+// +kubebuilder:printcolumn:name="NODE-EPB",type="string",JSONPath=".spec.link.endpoints[1].nodeName"
+// +kubebuilder:printcolumn:name="ITFCE-EPB",type="string",JSONPath=".spec.link.endpoints[1].interfaceName"
+// +kubebuilder:printcolumn:name="MH-EPB",type="string",JSONPath=".spec.link.endpoints[1].tag[?(@.key=='multiHoming')].value"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
 type Link struct {
