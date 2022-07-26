@@ -34,7 +34,6 @@ import (
 
 	"github.com/yndd/ndd-runtime/pkg/shared"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
-	"github.com/yndd/topology/internal/handler"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -104,7 +103,7 @@ type application struct {
 	//newTopology     func() topov1alpha1.Tp
 	//newTopologyNode func() topov1alpha1.Tn
 
-	handler handler.Handler
+	//handler handler.Handler
 }
 
 func getCrName(cr *topov1alpha1.Node) string {
@@ -127,15 +126,13 @@ func (r *application) Initialize(ctx context.Context, mr resource.Managed) error
 }
 
 func (r *application) Update(ctx context.Context, mr resource.Managed) (map[string]string, error) {
-	/*
-		cr, ok := mg.(*topov1alpha1.TopologyNode)
-		if !ok {
-			return nil, errors.New(errUnexpectedResource)
-		}
-	*/
+	cr, ok := mr.(*topov1alpha1.Node)
+	if !ok {
+		return nil, errors.New(errUnexpectedResource)
+	}
 
-	//return r.handleAppLogic(ctx, cr)
-	return nil, nil
+	return r.handleAppLogic(ctx, cr)
+	//return nil, nil
 }
 
 func (r *application) FinalUpdate(ctx context.Context, mr resource.Managed) {
@@ -178,11 +175,11 @@ func (r *application) FinalDelete(ctx context.Context, mr resource.Managed) {
 
 func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Node) (map[string]string, error) {
 	log := r.log.WithValues("function", "handleAppLogic", "crname", cr.GetName())
-	log.Debug("handleAppLogic")
+	log.Debug("handleAppLogic topologynode")
 
 	// initialize speedy
-	crName := getCrName(cr)
-	r.handler.Init(crName)
+	//crName := getCrName(cr)
+	//r.handler.Init(crName)
 
 	// get the topo
 
@@ -213,11 +210,11 @@ func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Node)
 	if err := r.setPlatform(ctx, cr, topo); err != nil {
 		return nil, err
 	}
-
-	//cr.SetOrganization(cr.GetOrganization())
-	//cr.SetDeployment(cr.GetDeployment())
-	//cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-	//cr.SetTopologyName(cr.GetTopologyName())
+	log.Debug("handleAppLogic topologynode set oda")
+	cr.SetOrganization(cr.GetOrganization())
+	cr.SetDeployment(cr.GetDeployment())
+	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
+	cr.SetResourceName(cr.GetTopologyName())
 
 	return make(map[string]string), nil
 }

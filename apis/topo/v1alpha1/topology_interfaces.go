@@ -226,3 +226,19 @@ func (x *Topology) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
 }
 */
+
+func (x *Topology) SetOrganization(s string) {
+	x.Status.SetOrganization(s)
+}
+
+func (x *Topology) SetDeployment(s string) {
+	x.Status.SetDeployment(s)
+}
+
+func (x *Topology) SetAvailabilityZone(s string) {
+	x.Status.SetAvailabilityZone(s)
+}
+
+func (x *Topology) SetResourceName(s string) {
+	x.Status.SetResourceName(s)
+}

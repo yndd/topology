@@ -1,4 +1,4 @@
----
+
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -25,23 +25,26 @@ spec:
     - jsonPath: .status.conditions[?(@.kind=='Ready')].status
       name: STATUS
       type: string
-    - jsonPath: .status.oda[?(@.key=='organization')].value
+    - jsonPath: .status.oda.organization
       name: ORG
       type: string
-    - jsonPath: .status.oda[?(@.key=='deployment')].value
+    - jsonPath: .status.oda.deployment
       name: DEP
       type: string
-    - jsonPath: .status.oda[?(@.key=='availabilityZone')].value
+    - jsonPath: .status.oda.availabilityZone
       name: AZ
       type: string
-    - jsonPath: .status.oda[?(@.key=='resourceName')].value
+    - jsonPath: .status.oda.resourceName
       name: TOPO
       type: string
-    - jsonPath: .spec.node.kind-name
+    - jsonPath: .spec.properties.vendorType
       name: KIND
       type: string
-    - jsonPath: .status.node.state.tag[?(@.key=='platform')].value
+    - jsonPath: ..spec.properties.platform
       name: PLATFORM
+      type: string
+    - jsonPath: ..spec.properties.position
+      name: POSITION
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE

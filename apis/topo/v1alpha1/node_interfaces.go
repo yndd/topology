@@ -211,6 +211,7 @@ func (x *Node) GetNodeIndex() uint32 {
 func (x *Node) InitializeResource() error {
 	return nil
 }
+*/
 
 func (x *Node) SetOrganization(s string) {
 	x.Status.SetOrganization(s)
@@ -223,4 +224,7 @@ func (x *Node) SetDeployment(s string) {
 func (x *Node) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
 }
-*/
+
+func (x *Node) SetResourceName(s string) {
+	x.Status.SetResourceName(s)
+}

@@ -29,7 +29,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
-	"github.com/yndd/topology/internal/handler"
 
 	//"github.com/yndd/topology/internal/shared"
 	"github.com/yndd/ndd-runtime/pkg/shared"
@@ -82,12 +81,14 @@ type application struct {
 	//newTopology   func() topov1alpha1.Tp
 	//newDeployment func() orgv1alpha1.Dp
 
-	handler handler.Handler
+	//handler handler.Handler
 }
 
+/*
 func getCrName(cr *topov1alpha1.Topology) string {
 	return strings.Join([]string{cr.GetNamespace(), cr.GetName()}, ".")
 }
+*/
 
 func (r *application) Initialize(ctx context.Context, mr resource.Managed) error {
 	/*
@@ -127,12 +128,14 @@ func (r *application) Delete(ctx context.Context, mr resource.Managed) (bool, er
 }
 
 func (r *application) FinalDelete(ctx context.Context, mr resource.Managed) {
-	cr, ok := mr.(*topov1alpha1.Topology)
-	if !ok {
-		return
-	}
-	crName := getCrName(cr)
-	r.handler.Delete(crName)
+	/*
+		cr, ok := mr.(*topov1alpha1.Topology)
+		if !ok {
+			return
+		}
+		crName := getCrName(cr)
+		r.handler.Delete(crName)
+	*/
 }
 
 func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Topology) (map[string]string, error) {
@@ -168,12 +171,10 @@ func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Topol
 		}
 	*/
 
-	/*
-		cr.SetOrganization(cr.GetOrganization())
-		cr.SetDeployment(cr.GetDeployment())
-		cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-		//cr.SetTopologyName(cr.GetTopologyName())
-	*/
+	cr.SetOrganization(cr.GetOrganization())
+	cr.SetDeployment(cr.GetDeployment())
+	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
+	//cr.SetTopologyName(cr.GetTopologyName())
 
 	return make(map[string]string), nil
 }

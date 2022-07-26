@@ -1,4 +1,4 @@
----
+
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -25,40 +25,40 @@ spec:
     - jsonPath: .status.conditions[?(@.kind=='Ready')].status
       name: STATUS
       type: string
-    - jsonPath: .status.oda[?(@.key=='organization')].value
+    - jsonPath: .status.oda.organization
       name: ORG
       type: string
-    - jsonPath: .status.oda[?(@.key=='deployment')].value
+    - jsonPath: .status.oda.deployment
       name: DEP
       type: string
-    - jsonPath: .status.oda[?(@.key=='availabilityZone')].value
+    - jsonPath: .status.oda.availabilityZone
       name: AZ
       type: string
-    - jsonPath: .status.oda[?(@.key=='resourceName')].value
+    - jsonPath: .status.oda.resourceName
       name: TOPO
       type: string
-    - jsonPath: .spec.link.properties.lag
+    - jsonPath: .spec.properties.lag
       name: LAG
-      type: string
-    - jsonPath: .spec.link.properties.lagmember
+      type: boolean
+    - jsonPath: .spec.properties.lagmember
       name: MEMBER
-      type: string
-    - jsonPath: .spec.link.endpoints[0].nodeName
+      type: boolean
+    - jsonPath: .spec.properties.endpoints[0].nodeName
       name: NODE-EPA
       type: string
-    - jsonPath: .spec.link.endpoints[0].interfaceName
+    - jsonPath: .spec.properties.endpoints[0].interfaceName
       name: ITFCE-EPA
       type: string
-    - jsonPath: .spec.link.endpoints[0].tag[?(@.key=='multiHoming')].value
+    - jsonPath: .spec.properties.endpoints[0].multiHomingName
       name: MH-EPA
       type: string
-    - jsonPath: .spec.link.endpoints[1].nodeName
+    - jsonPath: .spec.properties.endpoints[1].nodeName
       name: NODE-EPB
       type: string
-    - jsonPath: .spec.link.endpoints[1].interfaceName
+    - jsonPath: .spec.properties.endpoints[1].interfaceName
       name: ITFCE-EPB
       type: string
-    - jsonPath: .spec.link.endpoints[1].tag[?(@.key=='multiHoming')].value
+    - jsonPath: .spec.properties.endpoints[1].multiHomingName
       name: MH-EPB
       type: string
     - jsonPath: .metadata.creationTimestamp

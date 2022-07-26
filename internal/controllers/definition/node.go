@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"strings"
 
-	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
@@ -83,6 +82,17 @@ func renderFabricNode(cr *topov1alpha1.Definition, nodeInfo topov1alpha1.FabricN
 	if nodeInfo.GetPosition() != topov1alpha1.PositionSuperspine {
 		labels[LabelKeyTopologyPodIndex] = strconv.Itoa(int(nodeInfo.GetPodIndex()))
 	}
+
+	/*
+		oda := nddv1.OdaInfo{
+			Oda: map[string]string{},
+		}
+		oda.SetOrganization(cr.GetOrganization())
+		oda.SetAvailabilityZone(cr.GetAvailabilityZone())
+		oda.SetDeployment(cr.GetDeployment())
+		oda.SetResourceName(cr.GetTopologyName())
+	*/
+
 	return &topov1alpha1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            strings.Join([]string{cr.GetName(), nodeInfo.GetNodeName()}, "."),
@@ -103,17 +113,12 @@ func renderFabricNode(cr *topov1alpha1.Definition, nodeInfo topov1alpha1.FabricN
 				// Tags://
 			},
 		},
-		Status: topov1alpha1.NodeStatus{
-			ResourceStatus: nddv1.ResourceStatus{
-				OdaInfo: nddv1.OdaInfo{
-					Oda: map[string]string{
-						string(nddv1.OdaKindOrganization):    cr.GetOrganization(),
-						string(nddv1.OdaKindAvailabiityZone): cr.GetAvailabilityZone(),
-						string(nddv1.OdaKindDeployment):      cr.GetDeployment(),
-						string(nddv1.OdaKindResourceName):    cr.GetTopologyName(),
-					},
+		/*
+			Status: topov1alpha1.NodeStatus{
+				ResourceStatus: nddv1.ResourceStatus{
+					OdaInfo: oda,
 				},
 			},
-		},
+		*/
 	}
 }

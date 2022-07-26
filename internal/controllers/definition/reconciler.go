@@ -232,10 +232,12 @@ func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition
 	log := r.log.WithValues("crName", crName)
 	log.Debug("createFabric...")
 
-	f, err := topov1alpha1.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric)
+	f, err := topov1alpha1.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric, r.log)
 	if err != nil {
 		return err
 	}
+	f.PrintNodes()
+	f.PrintLinks()
 	for _, fn := range f.GetFabricNodes() {
 		node := renderFabricNode(cr, fn)
 		if err := r.client.Apply(ctx, node); err != nil {

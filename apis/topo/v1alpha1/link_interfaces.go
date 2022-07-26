@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/yndd/app-runtime/pkg/odns"
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 )
 
@@ -159,6 +160,22 @@ func (x *Link) GetRootPaths() []string {
 
 func (x *Link) SetRootPaths(rootPaths []string) {
 	x.Status.RootPaths = rootPaths
+}
+
+func (x *Link) GetOrganization() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetOrganization()
+}
+
+func (x *Link) GetDeployment() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetDeployment()
+}
+
+func (x *Link) GetAvailabilityZone() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetAvailabilityZone()
+}
+
+func (x *Link) GetTopologyName() string {
+	return odns.Name2OdnsTopoResource(x.GetName()).GetTopologyName()
 }
 
 /*
@@ -472,3 +489,19 @@ func (x *Link) SetAvailabilityZone(s string) {
 	x.Status.SetAvailabilityZone(s)
 }
 */
+
+func (x *Link) SetOrganization(s string) {
+	x.Status.SetOrganization(s)
+}
+
+func (x *Link) SetDeployment(s string) {
+	x.Status.SetDeployment(s)
+}
+
+func (x *Link) SetAvailabilityZone(s string) {
+	x.Status.SetAvailabilityZone(s)
+}
+
+func (x *Link) SetResourceName(s string) {
+	x.Status.SetResourceName(s)
+}

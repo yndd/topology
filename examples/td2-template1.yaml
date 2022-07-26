@@ -9,7 +9,7 @@ spec:
       tier1:
         num: 4
         vendorInfo:
-        - vendorType: NokiaSRL
+        - vendorType: nokiaSRL
           platform: "IXR-D3"
       pods:
       - num: 2
@@ -17,10 +17,10 @@ spec:
           tier3:
             num: 4
             vendorInfo:
-            - vendorType: NokiaSRL
+            - vendorType: nokiaSRL
               platform: "IXR-D3"
           tier2:
             num: 2
             vendorInfo:
-            - vendorType: NokiaSRL
+            - vendorType: nokiaSRL
               platform: "IXR-D3"

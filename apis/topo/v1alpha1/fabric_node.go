@@ -20,6 +20,7 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/yndd/ndd-runtime/pkg/logging"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 )
 
@@ -35,8 +36,9 @@ type FabricNode interface {
 	GetPlatform() string
 }
 
-func NewLeafFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorInfo) FabricNode {
+func NewLeafFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
+		log:        log,
 		position:   PositionLeaf,
 		podIndex:   podIndex,
 		nodeIndex:  nodeIndex,
@@ -44,8 +46,9 @@ func NewLeafFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorI
 	}
 }
 
-func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorInfo) FabricNode {
+func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
+		log:        log,
 		position:   PositionSpine,
 		podIndex:   podIndex,
 		nodeIndex:  nodeIndex,
@@ -53,8 +56,9 @@ func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendor
 	}
 }
 
-func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *FabricTierVendorInfo) FabricNode {
+func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
+		log:        log,
 		position:   PositionSuperspine,
 		nodeIndex:  nodeIndex,
 		vendorInfo: vendorInfo,
@@ -63,6 +67,7 @@ func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *FabricTierVendorInfo)
 
 // +k8s:deepcopy-gen=false
 type fabricNode struct {
+	log        logging.Logger
 	position   Position
 	nodeIndex  uint32 // relative number within the position, pod
 	podIndex   uint32 // pod index
@@ -74,30 +79,52 @@ func (n *fabricNode) GetInterfaceName(idx uint32) string {
 }
 
 func (n *fabricNode) GetInterfaceNameWithPlatformOffset(idx uint32) string {
+	n.log.Debug("GetInterfaceNameWithPlatformOffset",
+		"idx", idx,
+		"nodeName", n.GetNodeName(),
+		"podIndex", n.GetPodIndex(),
+		"vendorType", n.GetVendorType(),
+		"platform", n.GetPlatform(),
+		"position", n.GetPosition(),
+	)
+
+	n.log.Debug("GetInterfaceNameWithPlatformOffset",
+		"vendorType", n.GetVendorType(),
+		"vendorType", targetv1.VendorTypeNokiaSRL,
+	)
 	var actualIndex uint32
-	switch n.vendorInfo.VendorType {
+	switch n.GetVendorType() {
 	case targetv1.VendorTypeNokiaSRL:
-		switch n.position {
+		n.log.Debug("GetInterfaceNameWithPlatformOffset", "vendorType", targetv1.VendorTypeNokiaSRL)
+		switch n.GetPosition() {
 		case PositionLeaf:
-			switch n.vendorInfo.Platform {
+			n.log.Debug("GetInterfaceNameWithPlatformOffset", "position", targetv1.VendorTypeNokiaSRL)
+			switch n.GetPlatform() {
 			case "IXR-D3":
+				n.log.Debug("GetInterfaceNameWithPlatformOffset", "platform", "IXR-D3")
 				actualIndex = idx + 26
 			case "IXR-D2":
+				n.log.Debug("GetInterfaceNameWithPlatformOffset", "platform", "IXR-D2")
 				actualIndex = idx + 48
 			}
 		case PositionSpine:
-			switch n.vendorInfo.Platform {
+			switch n.GetPlatform() {
 			case "IXR-D3":
+				n.log.Debug("GetInterfaceNameWithPlatformOffset", "platform", "IXR-D3")
 				actualIndex = idx + 24
 			}
-		default:
-			// not expected
 		}
 	case targetv1.VendorTypeNokiaSROS:
 		// TODO
-	default:
-
 	}
+	n.log.Debug("GetInterfaceNameWithPlatformOffset",
+		"actualIndex", actualIndex,
+		"nodeName", n.GetNodeName(),
+		"podIndex", n.GetPodIndex(),
+		"vendorType", n.GetVendorType(),
+		"platform", n.GetPlatform(),
+		"position", n.GetPosition(),
+	)
 	return fmt.Sprintf("int-1/%d", actualIndex)
 }
 

@@ -17,7 +17,10 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the topo v1alpha1 API group
 package v1alpha1
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // +k8s:deepcopy-gen=false
 type FabricLink interface {
@@ -31,7 +34,7 @@ func NewFabricLink(epA *Endpoint, epB *Endpoint) FabricLink {
 	if epA.Node.GetPosition() != PositionSuperspine {
 		linkName = fmt.Sprintf("pod%d-%s%d-%s-%s%d-%s", epA.Node.GetPodIndex(), epA.Node.GetPosition(), epA.Node.GetNodeIndex(), epA.IfName, epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
 	} else {
-		linkName = fmt.Sprintf("%s%d-%s-pod%d-%s%d-%s", epA.Node.GetPosition(), epA.Node.GetNodeIndex(), epA.IfName, epA.Node.GetPodIndex(), epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
+		linkName = fmt.Sprintf("%s%d-%s-pod%d-%s%d-%s", epA.Node.GetPosition(), epA.Node.GetNodeIndex(), epA.IfName, epB.Node.GetPodIndex(), epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
 	}
 	return &fabricLink{
 		name: linkName,
@@ -57,7 +60,7 @@ type Endpoint struct {
 }
 
 func (l *fabricLink) GetName() string {
-	return l.name
+	return strings.ReplaceAll(l.name, "/", "-")
 }
 
 func (l *fabricLink) GetEndpointA() *Endpoint {

@@ -54,10 +54,10 @@ type TopologyDefaults struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="SYNC",type="string",JSONPath=".status.conditions[?(@.kind=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".status.conditions[?(@.kind=='Ready')].status"
-// +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.oda[?(@.key=='organization')].value"
-// +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda[?(@.key=='deployment')].value"
-// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda[?(@.key=='availability-zone')].value"
-// +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.topology-name"
+// +kubebuilder:printcolumn:name="ORG",type="string",JSONPath=".status.oda.organization"
+// +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda.deployment"
+// +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda.availabilityZone"
+// +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.oda.resourceName"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:categories={yndd,topo}
 type Topology struct {
