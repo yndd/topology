@@ -20,8 +20,6 @@ package fabric
 import (
 	"fmt"
 	"strings"
-
-	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 )
 
 // +k8s:deepcopy-gen=false
@@ -32,12 +30,15 @@ type FabricLink interface {
 }
 
 func NewFabricLink(epA *Endpoint, epB *Endpoint) FabricLink {
-	var linkName string
-	if epA.Node.GetPosition() != topov1alpha1.PositionSuperspine {
-		linkName = fmt.Sprintf("pod%d-%s%d-%s-%s%d-%s", epA.Node.GetPodIndex(), epA.Node.GetPosition(), epA.Node.GetNodeIndex(), epA.IfName, epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
-	} else {
-		linkName = fmt.Sprintf("%s%d-%s-pod%d-%s%d-%s", epA.Node.GetPosition(), epA.Node.GetNodeIndex(), epA.IfName, epB.Node.GetPodIndex(), epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
-	}
+	linkName := fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetNodeName(), epB.IfName)
+	/*
+		var linkName string
+		if epA.Node.GetPosition() != topov1alpha1.PositionSuperspine {
+			linkName = fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
+		} else {
+			linkName = fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetPodIndex(), epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
+		}
+	*/
 	return &fabricLink{
 		name: linkName,
 		epA:  epA,

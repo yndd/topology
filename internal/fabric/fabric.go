@@ -76,27 +76,20 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 		}
 	}
 
-	// define the number of superspine required.
-	// the superspine is equal to the amount of spines per pod and multiplied with the 
+	// proces superspines
+	// the superspine is equal to the amount of spines per pod and multiplied with the number in the template
 	if template.Tier1 != nil {
-		superspines := f.getSuperSPines(template.Tier1.NodeNumber)
+		superspines := f.getSuperSPines()
 		// process superspine nodes
 		for n := uint32(0); n < superspines; n++ {
-			vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
-			tier1NodeIndex := n + 1
-			tier1Node := NewSuperspineFabricNode(tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
+			for m := uint32(0); m < template.Tier1.NodeNumber; m++ {
+				vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
+				tier1NodeIndex := n + 1
+				tier1Node := NewSuperspineFabricNode(m+1, tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
 
-			f.addNode(topov1alpha1.PositionSuperspine, tier1Node, 0)
+				f.addNode(topov1alpha1.PositionSuperspine, tier1Node, 0)
+			}
 		}
-	}
-
-	// process superspine nodes
-	for n := uint32(0); n < template.Tier1.NodeNumber; n++ {
-		vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
-		tier1NodeIndex := n + 1
-		tier1Node := NewSuperspineFabricNode(tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
-
-		f.addNode(topov1alpha1.PositionSuperspine, tier1Node, 0)
 	}
 
 	// process spine-leaf links
@@ -120,26 +113,24 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 	}
 
 	// process superspine-spine links
-	for n, tier1Node := range f.tier1Nodes {
-		tier1NodeIndex := uint32(n) + 1
+	for _, tier1Node := range f.tier1Nodes {
+		//tier1NodeIndex := uint32(n) + 1
 		// we need to get all the spine in ll the pods
-		actualTier2 := uint32(0)
-		for _, podInfo := range f.pods {
-			for _, tier2Node := range podInfo.tier2Nodes {
-				actualTier2++
-				// this represents the total network index for the Spine
-				//tier2NodeIndex := uint32(m) + 1 + (p * uint32(len(podInfo.tier2Nodes)))
-
-				epA := &Endpoint{
-					Node:   tier1Node,
-					IfName: tier1Node.GetInterfaceName(actualTier2),
+		//actualTier2 := uint32(0)
+		for p, podInfo := range f.pods {
+			for m, tier2Node := range podInfo.tier2Nodes {
+				// spine and superspine line up so we only create a link if there is a match
+				if uint32(m) == tier1Node.GetNodeIndex() {
+					epA := &Endpoint{
+						Node:   tier1Node,
+						IfName: tier1Node.GetInterfaceName(p),
+					}
+					epB := &Endpoint{
+						Node:   tier2Node,
+						IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(1),
+					}
+					f.addLink(topov1alpha1.PositionSuperspine, NewFabricLink(epA, epB))
 				}
-				epB := &Endpoint{
-					Node:   tier2Node,
-					IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(tier1NodeIndex),
-				}
-				f.addLink(topov1alpha1.PositionSuperspine, NewFabricLink(epA, epB))
-
 			}
 		}
 	}
@@ -166,10 +157,12 @@ func (f *fabric) addNode(pos topov1alpha1.Position, n FabricNode, podIndex uint3
 	defer f.m.Unlock()
 
 	// initialize the tier3/tier3 node struct per podIndex
-	if _, ok := f.pods[podIndex]; !ok {
-		f.pods[podIndex] = &podInfo{
-			tier2Nodes: make([]FabricNode, 0),
-			tier3Nodes: make([]FabricNode, 0),
+	if pos != topov1alpha1.PositionSuperspine {
+		if _, ok := f.pods[podIndex]; !ok {
+			f.pods[podIndex] = &podInfo{
+				tier2Nodes: make([]FabricNode, 0),
+				tier3Nodes: make([]FabricNode, 0),
+			}
 		}
 	}
 
@@ -205,15 +198,15 @@ func (f *fabric) getNodesPerPodIndex(pos Position, podIndex uint32) []FabricNode
 }
 */
 
-func (f *fabric) getSuperSPines(superSpinePerSpine uint32) uint32 {
+// getSuperSPines identifies the max number of spines in a pod
+func (f *fabric) getSuperSPines() uint32 {
 	var superspines uint32
 	for _, podInfo := range f.pods {
 		if superspines < uint32(len(podInfo.tier2Nodes)) {
 			superspines = uint32(len(podInfo.tier2Nodes))
 		}
 	}
-	// superSpinePerSpine defines the amount of superspines per spine
-	return superspines * superSpinePerSpine
+	return superspines
 }
 
 func (f *fabric) addLink(pos topov1alpha1.Position, l FabricLink) {

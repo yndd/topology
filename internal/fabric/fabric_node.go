@@ -57,12 +57,13 @@ func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *topov1alpha1.Fab
 	}
 }
 
-func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewSuperspineFabricNode(tier1Index, nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
 		log:        log,
 		position:   topov1alpha1.PositionSuperspine,
 		nodeIndex:  nodeIndex,
 		vendorInfo: vendorInfo,
+		tier1Index: tier1Index,
 	}
 }
 
@@ -72,6 +73,7 @@ type fabricNode struct {
 	position   topov1alpha1.Position
 	nodeIndex  uint32 // relative number within the position, pod
 	podIndex   uint32 // pod index
+	tier1Index uint32 // this is the superspine index
 	vendorInfo *topov1alpha1.FabricTierVendorInfo
 }
 
@@ -154,6 +156,6 @@ func (n *fabricNode) GetNodeName() string {
 		return fmt.Sprintf("pod%d-%s%d", n.podIndex, n.position, n.nodeIndex)
 
 	} else {
-		return fmt.Sprintf("%s%d", n.position, n.nodeIndex)
+		return fmt.Sprintf("%s%d-%d", n.position, n.nodeIndex, n.tier1Index)
 	}
 }
