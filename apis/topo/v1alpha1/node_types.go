@@ -74,7 +74,7 @@ const (
 // +kubebuilder:printcolumn:name="DEP",type="string",JSONPath=".status.oda.deployment"
 // +kubebuilder:printcolumn:name="AZ",type="string",JSONPath=".status.oda.availabilityZone"
 // +kubebuilder:printcolumn:name="TOPO",type="string",JSONPath=".status.oda.resourceName"
-// +kubebuilder:printcolumn:name="KIND",type="string",JSONPath=".spec.properties.vendorType"
+// +kubebuilder:printcolumn:name="VENDORTYPE",type="string",JSONPath=".spec.properties.vendorType"
 // +kubebuilder:printcolumn:name="PLATFORM",type="string",JSONPath="..spec.properties.platform"
 // +kubebuilder:printcolumn:name="POSITION",type="string",JSONPath="..spec.properties.position"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"

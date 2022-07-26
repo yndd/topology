@@ -15,51 +15,52 @@ limitations under the License.
 */
 
 // Package v1alpha1 contains API Schema definitions for the topo v1alpha1 API group
-package v1alpha1
+package fabric
 
 import (
 	"fmt"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	targetv1 "github.com/yndd/target/apis/target/v1"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 )
 
 // +k8s:deepcopy-gen=false
 type FabricNode interface {
 	GetNodeName() string
-	GetPosition() Position
+	GetPosition() topov1alpha1.Position
 	GetNodeIndex() uint32
 	GetPodIndex() uint32
 	GetInterfaceName(idx uint32) string
-	GetInterfaceNameWithPlatformOffset(idx uint32) string
+	GetInterfaceNameWithPlatfromOffset(idx uint32) string
 	GetVendorType() targetv1.VendorType
 	GetPlatform() string
 }
 
-func NewLeafFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewLeafFabricNode(podIndex, nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
 		log:        log,
-		position:   PositionLeaf,
+		position:   topov1alpha1.PositionLeaf,
 		podIndex:   podIndex,
 		nodeIndex:  nodeIndex,
 		vendorInfo: vendorInfo,
 	}
 }
 
-func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
 		log:        log,
-		position:   PositionSpine,
+		position:   topov1alpha1.PositionSpine,
 		podIndex:   podIndex,
 		nodeIndex:  nodeIndex,
 		vendorInfo: vendorInfo,
 	}
 }
 
-func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
 		log:        log,
-		position:   PositionSuperspine,
+		position:   topov1alpha1.PositionSuperspine,
 		nodeIndex:  nodeIndex,
 		vendorInfo: vendorInfo,
 	}
@@ -68,17 +69,17 @@ func NewSuperspineFabricNode(nodeIndex uint32, vendorInfo *FabricTierVendorInfo,
 // +k8s:deepcopy-gen=false
 type fabricNode struct {
 	log        logging.Logger
-	position   Position
+	position   topov1alpha1.Position
 	nodeIndex  uint32 // relative number within the position, pod
 	podIndex   uint32 // pod index
-	vendorInfo *FabricTierVendorInfo
+	vendorInfo *topov1alpha1.FabricTierVendorInfo
 }
 
 func (n *fabricNode) GetInterfaceName(idx uint32) string {
 	return fmt.Sprintf("int-1/%d", idx)
 }
 
-func (n *fabricNode) GetInterfaceNameWithPlatformOffset(idx uint32) string {
+func (n *fabricNode) GetInterfaceNameWithPlatfromOffset(idx uint32) string {
 	n.log.Debug("GetInterfaceNameWithPlatformOffset",
 		"idx", idx,
 		"nodeName", n.GetNodeName(),
@@ -97,7 +98,7 @@ func (n *fabricNode) GetInterfaceNameWithPlatformOffset(idx uint32) string {
 	case targetv1.VendorTypeNokiaSRL:
 		n.log.Debug("GetInterfaceNameWithPlatformOffset", "vendorType", targetv1.VendorTypeNokiaSRL)
 		switch n.GetPosition() {
-		case PositionLeaf:
+		case topov1alpha1.PositionLeaf:
 			n.log.Debug("GetInterfaceNameWithPlatformOffset", "position", targetv1.VendorTypeNokiaSRL)
 			switch n.GetPlatform() {
 			case "IXR-D3":
@@ -107,7 +108,7 @@ func (n *fabricNode) GetInterfaceNameWithPlatformOffset(idx uint32) string {
 				n.log.Debug("GetInterfaceNameWithPlatformOffset", "platform", "IXR-D2")
 				actualIndex = idx + 48
 			}
-		case PositionSpine:
+		case topov1alpha1.PositionSpine:
 			switch n.GetPlatform() {
 			case "IXR-D3":
 				n.log.Debug("GetInterfaceNameWithPlatformOffset", "platform", "IXR-D3")
@@ -128,7 +129,7 @@ func (n *fabricNode) GetInterfaceNameWithPlatformOffset(idx uint32) string {
 	return fmt.Sprintf("int-1/%d", actualIndex)
 }
 
-func (n *fabricNode) GetPosition() Position {
+func (n *fabricNode) GetPosition() topov1alpha1.Position {
 	return n.position
 }
 
@@ -149,7 +150,7 @@ func (n *fabricNode) GetPlatform() string {
 }
 
 func (n *fabricNode) GetNodeName() string {
-	if n.GetPosition() != PositionSuperspine {
+	if n.GetPosition() != topov1alpha1.PositionSuperspine {
 		return fmt.Sprintf("pod%d-%s%d", n.podIndex, n.position, n.nodeIndex)
 
 	} else {

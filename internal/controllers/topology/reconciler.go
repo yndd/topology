@@ -174,7 +174,7 @@ func (r *application) handleAppLogic(ctx context.Context, cr *topov1alpha1.Topol
 	cr.SetOrganization(cr.GetOrganization())
 	cr.SetDeployment(cr.GetDeployment())
 	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
-	//cr.SetTopologyName(cr.GetTopologyName())
+	cr.SetResourceName(cr.GetTopologyName())
 
 	return make(map[string]string), nil
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/shared"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"github.com/yndd/topology/internal/fabric"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -232,7 +233,7 @@ func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition
 	log := r.log.WithValues("crName", crName)
 	log.Debug("createFabric...")
 
-	f, err := topov1alpha1.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric, r.log)
+	f, err := fabric.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric, r.log)
 	if err != nil {
 		return err
 	}

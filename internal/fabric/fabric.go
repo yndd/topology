@@ -15,13 +15,14 @@ limitations under the License.
 */
 
 // Package v1alpha1 contains API Schema definitions for the topo v1alpha1 API group
-package v1alpha1
+package fabric
 
 import (
 	"fmt"
 	"sync"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 )
 
 // +k8s:deepcopy-gen=false
@@ -32,22 +33,13 @@ type Fabric interface {
 	PrintLinks()
 }
 
-func NewFabric(namespaceName string, template *FabricTemplate, log logging.Logger) (Fabric, error) {
+func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log logging.Logger) (Fabric, error) {
 	f := &fabric{
 		log:             log,
 		tier1Nodes:      make([]FabricNode, 0),
 		pods:            map[uint32]*podInfo{},
 		tier2tier3Links: make([]FabricLink, 0),
 		tier1tier2Links: make([]FabricLink, 0),
-	}
-
-	// process superspine nodes
-	for n := uint32(0); n < template.Tier1.NodeNumber; n++ {
-		vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
-		tier1NodeIndex := n + 1
-		tier1Node := NewSuperspineFabricNode(tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
-
-		f.addNode(PositionSuperspine, tier1Node, 0)
 	}
 
 	// process leaf/spine nodes
@@ -72,15 +64,39 @@ func NewFabric(namespaceName string, template *FabricTemplate, log logging.Logge
 
 					if kind == "tier3" {
 						fabricNode = NewLeafFabricNode(podIndex, n+1, tier.VendorInfo[vendorIdx], f.log)
-						f.addNode(PositionLeaf, fabricNode, podIndex)
+						f.addNode(topov1alpha1.PositionLeaf, fabricNode, podIndex)
 
 					} else {
 						fabricNode = NewSpineFabricNode(podIndex, n+1, tier.VendorInfo[vendorIdx], f.log)
-						f.addNode(PositionSpine, fabricNode, podIndex)
+						f.addNode(topov1alpha1.PositionSpine, fabricNode, podIndex)
+
 					}
 				}
 			}
 		}
+	}
+
+	// define the number of superspine required.
+	// the superspine is equal to the amount of spines per pod and multiplied with the 
+	if template.Tier1 != nil {
+		superspines := f.getSuperSPines(template.Tier1.NodeNumber)
+		// process superspine nodes
+		for n := uint32(0); n < superspines; n++ {
+			vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
+			tier1NodeIndex := n + 1
+			tier1Node := NewSuperspineFabricNode(tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
+
+			f.addNode(topov1alpha1.PositionSuperspine, tier1Node, 0)
+		}
+	}
+
+	// process superspine nodes
+	for n := uint32(0); n < template.Tier1.NodeNumber; n++ {
+		vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
+		tier1NodeIndex := n + 1
+		tier1Node := NewSuperspineFabricNode(tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
+
+		f.addNode(topov1alpha1.PositionSuperspine, tier1Node, 0)
 	}
 
 	// process spine-leaf links
@@ -96,9 +112,9 @@ func NewFabric(namespaceName string, template *FabricTemplate, log logging.Logge
 				}
 				epB := &Endpoint{
 					Node:   tier3Node,
-					IfName: tier3Node.GetInterfaceNameWithPlatformOffset(tier2NodeIndex),
+					IfName: tier3Node.GetInterfaceNameWithPlatfromOffset(tier2NodeIndex),
 				}
-				f.addLink(PositionSpine, NewFabricLink(epA, epB))
+				f.addLink(topov1alpha1.PositionSpine, NewFabricLink(epA, epB))
 			}
 		}
 	}
@@ -120,9 +136,9 @@ func NewFabric(namespaceName string, template *FabricTemplate, log logging.Logge
 				}
 				epB := &Endpoint{
 					Node:   tier2Node,
-					IfName: tier2Node.GetInterfaceNameWithPlatformOffset(tier1NodeIndex),
+					IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(tier1NodeIndex),
 				}
-				f.addLink(PositionSuperspine, NewFabricLink(epA, epB))
+				f.addLink(topov1alpha1.PositionSuperspine, NewFabricLink(epA, epB))
 
 			}
 		}
@@ -145,7 +161,7 @@ type podInfo struct {
 	tier3Nodes []FabricNode // fabric nodes are stored per podIndex
 }
 
-func (f *fabric) addNode(pos Position, n FabricNode, podIndex uint32) {
+func (f *fabric) addNode(pos topov1alpha1.Position, n FabricNode, podIndex uint32) {
 	f.m.Lock()
 	defer f.m.Unlock()
 
@@ -158,11 +174,11 @@ func (f *fabric) addNode(pos Position, n FabricNode, podIndex uint32) {
 	}
 
 	switch pos {
-	case PositionLeaf:
+	case topov1alpha1.PositionLeaf:
 		f.pods[podIndex].tier3Nodes = append(f.pods[podIndex].tier3Nodes, n)
-	case PositionSpine:
+	case topov1alpha1.PositionSpine:
 		f.pods[podIndex].tier2Nodes = append(f.pods[podIndex].tier2Nodes, n)
-	case PositionSuperspine:
+	case topov1alpha1.PositionSuperspine:
 		f.tier1Nodes = append(f.tier1Nodes, n)
 	}
 }
@@ -189,11 +205,22 @@ func (f *fabric) getNodesPerPodIndex(pos Position, podIndex uint32) []FabricNode
 }
 */
 
-func (f *fabric) addLink(pos Position, l FabricLink) {
+func (f *fabric) getSuperSPines(superSpinePerSpine uint32) uint32 {
+	var superspines uint32
+	for _, podInfo := range f.pods {
+		if superspines < uint32(len(podInfo.tier2Nodes)) {
+			superspines = uint32(len(podInfo.tier2Nodes))
+		}
+	}
+	// superSpinePerSpine defines the amount of superspines per spine
+	return superspines * superSpinePerSpine
+}
+
+func (f *fabric) addLink(pos topov1alpha1.Position, l FabricLink) {
 	switch pos {
-	case PositionSpine:
+	case topov1alpha1.PositionSpine:
 		f.tier2tier3Links = append(f.tier2tier3Links, l)
-	case PositionSuperspine:
+	case topov1alpha1.PositionSuperspine:
 		f.tier1tier2Links = append(f.tier1tier2Links, l)
 	}
 }

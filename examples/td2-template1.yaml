@@ -7,7 +7,7 @@ spec:
   properties:
     fabric:
       tier1:
-        num: 4
+        num: 1
         vendorInfo:
         - vendorType: nokiaSRL
           platform: "IXR-D3"

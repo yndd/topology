@@ -23,6 +23,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"github.com/yndd/topology/internal/fabric"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -68,7 +69,7 @@ type FabricNodeInfo struct {
 	InterfaceName string
 }
 
-func renderFabricNode(cr *topov1alpha1.Definition, nodeInfo topov1alpha1.FabricNode) *topov1alpha1.Node { // nolint:interfacer,gocyclo
+func renderFabricNode(cr *topov1alpha1.Definition, nodeInfo fabric.FabricNode) *topov1alpha1.Node { // nolint:interfacer,gocyclo
 	labels := map[string]string{
 		LabelKeyTopologyPosition:   string(nodeInfo.GetPosition()),
 		LabelKeyTopologyNodeIndex:  strconv.Itoa(int(nodeInfo.GetNodeIndex())),

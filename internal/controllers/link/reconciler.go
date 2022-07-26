@@ -269,6 +269,7 @@ func (r *application) handleStatus(ctx context.Context, cr *topov1alpha1.Link, t
 	cr.SetOrganization(cr.GetOrganization())
 	cr.SetDeployment(cr.GetDeployment())
 	cr.SetAvailabilityZone(cr.GetAvailabilityZone())
+	cr.SetResourceName(cr.GetTopologyName())
 	return nil
 }
 

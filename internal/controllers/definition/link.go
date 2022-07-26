@@ -22,10 +22,11 @@ import (
 	nddv1 "github.com/yndd/ndd-runtime/apis/common/v1"
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"github.com/yndd/topology/internal/fabric"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func renderFabricLink(cr *topov1alpha1.Definition, link topov1alpha1.FabricLink) *topov1alpha1.Link { // nolint:interfacer,gocyclo
+func renderFabricLink(cr *topov1alpha1.Definition, link fabric.FabricLink) *topov1alpha1.Link { // nolint:interfacer,gocyclo
 	labels := map[string]string{
 		LabelKeyOrganization:     cr.GetOrganization(),
 		LabelKeyDeployment:       cr.GetDeployment(),
