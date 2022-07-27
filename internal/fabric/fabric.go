@@ -99,15 +99,27 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 			for m, tier3Node := range podInfo.tier3Nodes {
 				tier3NodeIndex := uint32(m) + 1
 
-				epA := &Endpoint{
-					Node:   tier2Node,
-					IfName: tier2Node.GetInterfaceName(tier3NodeIndex),
+				// validate if the uplinks per node is not greater than max uplinks
+				// otherwise there is a conflict and the algorithm behind will create
+				// overlapping indexes
+				uplinksPerNode := tier3Node.GetUplinkPerNode()
+				if uplinksPerNode > template.MaxUplinksTier3ToTier2 {
+					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier3ToTier2 %d",
+						uplinksPerNode, template.MaxUplinksTier3ToTier2)
 				}
-				epB := &Endpoint{
-					Node:   tier3Node,
-					IfName: tier3Node.GetInterfaceNameWithPlatfromOffset(tier2NodeIndex),
+
+				// u represnts the actual uplink index
+				for u := uint32(0); u < uplinksPerNode; u++ {
+					epA := &Endpoint{
+						Node:   tier2Node,
+						IfName: tier2Node.GetInterfaceName(u + 1 + ((tier3NodeIndex - 1) * uplinksPerNode)),
+					}
+					epB := &Endpoint{
+						Node:   tier3Node,
+						IfName: tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier2NodeIndex - 1) * uplinksPerNode)),
+					}
+					f.addLink(topov1alpha1.PositionSpine, NewFabricLink(epA, epB))
 				}
-				f.addLink(topov1alpha1.PositionSpine, NewFabricLink(epA, epB))
 			}
 		}
 	}
@@ -128,10 +140,10 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 				// spine and superspine line up so we only create a link if there is a match
 				// on the indexes
 				if (m + 1) == int(tier1Node.GetNodeIndex()) {
+					// u represnts the actual uplink index
 					for u := uint32(0); u < uplinksPerNode; u++ {
 						epA := &Endpoint{
-							Node: tier1Node,
-							//IfName: tier1Node.GetInterfaceName(p + (template.MaxUplinksTier2ToTier1 * u)),
+							Node:   tier1Node,
 							IfName: tier1Node.GetInterfaceName(u + 1 + ((p - 1) * template.MaxUplinksTier2ToTier1)),
 						}
 						epB := &Endpoint{
