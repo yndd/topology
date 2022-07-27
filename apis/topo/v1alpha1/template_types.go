@@ -55,9 +55,14 @@ type FabricTemplate struct {
 }
 
 type FabricTemplatePod struct {
+	// number of pods defined based on this template
 	PodNumber uint32 `json:"num,omitempty"`
-	// tier3, tier2
-	Tiers map[string]*FabricTemplateTier `json:"tiers,omitempty"`
+	// Tier2 template, that defines the spine parameters in the pod definition
+	Tier2 *FabricTemplateTier  `json:"tier2,omitempty"`
+	// Tier3 template, that defines the leaf parameters in the pod definition
+	Tier3 *FabricTemplateTier  `json:"tier3,omitempty"`
+	// pod reference to a template that defines the pod definition
+	PodTemplateReference string `json:"podRef,omitempty"`
 }
 
 type FabricTemplateTier struct {

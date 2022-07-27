@@ -31,14 +31,7 @@ type FabricLink interface {
 
 func NewFabricLink(epA *Endpoint, epB *Endpoint) FabricLink {
 	linkName := fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetNodeName(), epB.IfName)
-	/*
-		var linkName string
-		if epA.Node.GetPosition() != topov1alpha1.PositionSuperspine {
-			linkName = fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
-		} else {
-			linkName = fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetPodIndex(), epB.Node.GetPosition(), epB.Node.GetNodeIndex(), epB.IfName)
-		}
-	*/
+	
 	return &fabricLink{
 		name: linkName,
 		epA:  epA,

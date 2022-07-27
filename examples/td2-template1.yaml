@@ -15,16 +15,15 @@ spec:
           platform: "IXR-D3"
       pods:
       - num: 2
-        tiers:
-          tier3:
-            num: 4
-            uplinkPerNode: 1
-            vendorInfo:
-            - vendorType: nokiaSRL
-              platform: "IXR-D3"
-          tier2:
-            num: 2
-            uplinkPerNode: 1
-            vendorInfo:
-            - vendorType: nokiaSRL
-              platform: "IXR-D3"
+        tier3:
+          num: 4
+          uplinkPerNode: 1
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"
+        tier2:
+          num: 2
+          uplinkPerNode: 1
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"

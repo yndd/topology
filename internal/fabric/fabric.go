@@ -47,32 +47,15 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 	for p, pod := range template.Pods {
 		// i is the number of pods in a definition
 		for i := uint32(0); i < pod.PodNumber; i++ {
+			// podIndex is pod template index * pod index within the template
 			podIndex := (uint32(p) + 1) * (i + 1)
 
-			log.Debug("podIndex", "podIndex", podIndex)
+			//log.Debug("podIndex", "podIndex", podIndex)
 
-			// kind is tier 2 or tier3
-			for kind, tier := range pod.Tiers {
-				vendorNum := len(tier.VendorInfo)
-				if kind != "tier3" && kind != "tier2" {
-					return nil, fmt.Errorf("wrong kind in the template definition: %s, value: %s, expected tier2 or tier3", namespaceName, kind)
-				}
-				for n := uint32(0); n < tier.NodeNumber; n++ {
-					vendorIdx := n % uint32(vendorNum)
-
-					var fabricNode FabricNode
-
-					if kind == "tier3" {
-						fabricNode = NewLeafFabricNode(podIndex, n+1, tier.UplinksPerNode, tier.VendorInfo[vendorIdx], f.log)
-						f.addNode(topov1alpha1.PositionLeaf, fabricNode, podIndex)
-
-					} else {
-						fabricNode = NewSpineFabricNode(podIndex, n+1, tier.UplinksPerNode, tier.VendorInfo[vendorIdx], f.log)
-						f.addNode(topov1alpha1.PositionSpine, fabricNode, podIndex)
-
-					}
-				}
-			}
+			// tier 2 -> spines in the pod
+			f.processPodNodeTier("tier2", podIndex, pod.Tier2)
+			// tier 3 -> leafs in the pod
+			f.processPodNodeTier("tier3", podIndex, pod.Tier3)
 		}
 	}
 
@@ -83,9 +66,15 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 		// process superspine nodes
 		for n := uint32(0); n < superspines; n++ {
 			for m := uint32(0); m < template.Tier1.NodeNumber; m++ {
+				// venndor Index is used to map to the particular node based on modulo
+				// if 1 vendor -> all nodes are from 1 vendor
+				// if 2 vendors -> all odd nodes will be vendor A and all even nodes will be vendor B
+				// if 3 vendors -> 1st is vendorA, 2nd vendor B, 3rd is vendor C
 				vendorIdx := n % uint32(len(template.Tier1.VendorInfo))
-				tier1NodeIndex := n + 1
-				tier1Node := NewSuperspineFabricNode(m+1, tier1NodeIndex, template.Tier1.VendorInfo[vendorIdx], f.log)
+
+				// PlaneIndex: m + 1 -> starts counting from 1, used when multiple nodes are used in the superspine plane
+				// NodeIndex: n + 1 -> could also be called the Plane Index
+				tier1Node := NewSuperspineFabricNode(m+1, n+1, template.Tier1.VendorInfo[vendorIdx], f.log)
 
 				f.addNode(topov1alpha1.PositionSuperspine, tier1Node, 0)
 			}
@@ -108,15 +97,23 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 						uplinksPerNode, template.MaxUplinksTier3ToTier2)
 				}
 
+				// the algorithm needs to avoid reindixing if changes happen -> introduced maxNumUplinks
+				// the allocation is first allocating the uplink Index
 				// u represnts the actual uplink index
+				// spine Index    -> actualUplinkId + (actual leafs  * max uplinks)
+				// leaf  Index    -> actualUplinkId + (actual spines * max uplinks)
+				// actualUplinkId = u + 1 -> counting starts at 1
+				// actual leafs   = tier3NodeIndex - 1 -> counting from 0
+				// actual spines  = tier2NodeIndex - 1 -> counting from 0
+				// max uplinks    = template.MaxUplinksTier3ToTier2
 				for u := uint32(0); u < uplinksPerNode; u++ {
 					epA := &Endpoint{
 						Node:   tier2Node,
-						IfName: tier2Node.GetInterfaceName(u + 1 + ((tier3NodeIndex - 1) * uplinksPerNode)),
+						IfName: tier2Node.GetInterfaceName(u + 1 + ((tier3NodeIndex - 1) * template.MaxUplinksTier3ToTier2)),
 					}
 					epB := &Endpoint{
 						Node:   tier3Node,
-						IfName: tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier2NodeIndex - 1) * uplinksPerNode)),
+						IfName: tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier2NodeIndex - 1) * template.MaxUplinksTier3ToTier2)),
 					}
 					f.addLink(topov1alpha1.PositionSpine, NewFabricLink(epA, epB))
 				}
@@ -140,7 +137,15 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 				// spine and superspine line up so we only create a link if there is a match
 				// on the indexes
 				if (m + 1) == int(tier1Node.GetNodeIndex()) {
+					// the algorithm needs to avoid reindixing if changes happen -> introduced maxNumUplinks
+					// the allocation is first allocating the uplink Index
 					// u represnts the actual uplink index
+					// superspine Index -> actualUplinkId + (actual podIndex  * max uplinks)
+					// spine Index      -> actualUplinkId + (actual spines per plane * max uplinks)
+					// actualUplinkId          = u + 1 -> counting starts at 1
+					// actual PodIndex         = p +1
+					// actual spines per plane = tier1Node.GetNodePlaneIndex() - 1
+					// max uplinks             = template.MaxUplinksTier2ToTier1
 					for u := uint32(0); u < uplinksPerNode; u++ {
 						epA := &Endpoint{
 							Node:   tier1Node,
@@ -148,7 +153,7 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 						}
 						epB := &Endpoint{
 							Node:   tier2Node,
-							IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier1Node.GetNodeTierIndex() - 1) * template.MaxUplinksTier2ToTier1)),
+							IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier1Node.GetNodePlaneIndex() - 1) * template.MaxUplinksTier2ToTier1)),
 						}
 						f.addLink(topov1alpha1.PositionSuperspine, NewFabricLink(epA, epB))
 					}
@@ -198,28 +203,6 @@ func (f *fabric) addNode(pos topov1alpha1.Position, n FabricNode, podIndex uint3
 	}
 }
 
-/*
-func (f *fabric) getPodIndexes() uint32 {
-	return uint32(len(f.tier2tier3Links))
-}
-*/
-
-/*
-func (f *fabric) getNodesPerPodIndex(pos Position, podIndex uint32) []FabricNode {
-	f.m.Lock()
-	defer f.m.Unlock()
-
-	switch pos {
-	case PositionLeaf:
-		return f.tier3Nodes[podIndex]
-	case PositionSpine:
-		return f.tier2Nodes[podIndex]
-	default:
-		return nil
-	}
-}
-*/
-
 // getSuperSPines identifies the max number of spines in a pod
 func (f *fabric) getSuperSPines() uint32 {
 	var superspines uint32
@@ -237,6 +220,32 @@ func (f *fabric) addLink(pos topov1alpha1.Position, l FabricLink) {
 		f.tier2tier3Links = append(f.tier2tier3Links, l)
 	case topov1alpha1.PositionSuperspine:
 		f.tier1tier2Links = append(f.tier1tier2Links, l)
+	}
+}
+
+func (f *fabric) processPodNodeTier(tier string, podIndex uint32, tierTempl *topov1alpha1.FabricTemplateTier) {
+	vendorNum := len(tierTempl.VendorInfo)
+	for n := uint32(0); n < tierTempl.NodeNumber; n++ {
+		// n is the node Index within the tier
+		vendorIdx := n % uint32(vendorNum)
+
+		var fabricNode FabricNode
+
+		if tier == "tier3" {
+			// create a leaf node in the fabric
+			// podIndex is the index of the pod -> counting starts from 1
+			// nodeIndex (n+1) is the nodeIndex within the pod -> countng starts from 1
+			fabricNode = NewLeafFabricNode(podIndex, n+1, tierTempl.UplinksPerNode, tierTempl.VendorInfo[vendorIdx], f.log)
+			f.addNode(topov1alpha1.PositionLeaf, fabricNode, podIndex)
+
+		} else {
+			// create a spine node in the fabric
+			// podIndex is the index of the pod -> counting starts from 1
+			// nodeIndex (n+1) is the nodeIndex within the pod -> countng starts from 1
+			fabricNode = NewSpineFabricNode(podIndex, n+1, tierTempl.UplinksPerNode, tierTempl.VendorInfo[vendorIdx], f.log)
+			f.addNode(topov1alpha1.PositionSpine, fabricNode, podIndex)
+
+		}
 	}
 }
 

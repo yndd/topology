@@ -30,7 +30,7 @@ type FabricNode interface {
 	GetNodeName() string
 	GetPosition() topov1alpha1.Position
 	GetNodeIndex() uint32
-	GetNodeTierIndex() uint32
+	GetNodePlaneIndex() uint32
 	GetPodIndex() uint32
 	GetInterfaceName(idx uint32) string
 	GetInterfaceNameWithPlatfromOffset(idx uint32) string
@@ -61,25 +61,30 @@ func NewSpineFabricNode(podIndex, nodeIndex, uplinkPerNode uint32, vendorInfo *t
 	}
 }
 
-func NewSuperspineFabricNode(tier1Index, nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewSuperspineFabricNode(nodePlaneIndex, plane uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
-		log:        log,
-		position:   topov1alpha1.PositionSuperspine,
-		nodeIndex:  nodeIndex,
-		vendorInfo: vendorInfo,
-		tier1Index: tier1Index,
+		log:            log,
+		position:       topov1alpha1.PositionSuperspine,
+		nodeIndex:      plane,
+		vendorInfo:     vendorInfo,
+		nodePlaneIndex: nodePlaneIndex,
 	}
 }
 
 // +k8s:deepcopy-gen=false
 type fabricNode struct {
-	log           logging.Logger
-	position      topov1alpha1.Position
-	nodeIndex     uint32 // relative number within the position, pod
-	podIndex      uint32 // pod index
-	tier1Index    uint32 // this is the superspine index
-	vendorInfo    *topov1alpha1.FabricTierVendorInfo
-	uplinkPerNode uint32
+	log      logging.Logger
+	position topov1alpha1.Position
+	// for superspines this is the plane Index
+	// for spines/leafs this is the node index within the pod
+	nodeIndex uint32 // relative number within the position/pod
+	// only used for leafs and spines
+	podIndex uint32
+	// this is the node index within the plane
+	// only used for superspines
+	nodePlaneIndex uint32
+	vendorInfo     *topov1alpha1.FabricTierVendorInfo
+	uplinkPerNode  uint32
 }
 
 func (n *fabricNode) GetInterfaceName(idx uint32) string {
@@ -144,8 +149,8 @@ func (n *fabricNode) GetNodeIndex() uint32 {
 	return n.nodeIndex
 }
 
-func (n *fabricNode) GetNodeTierIndex() uint32 {
-	return n.tier1Index
+func (n *fabricNode) GetNodePlaneIndex() uint32 {
+	return n.nodePlaneIndex
 }
 
 func (n *fabricNode) GetPodIndex() uint32 {
@@ -165,7 +170,7 @@ func (n *fabricNode) GetNodeName() string {
 		return fmt.Sprintf("pod%d-%s%d", n.podIndex, n.position, n.nodeIndex)
 
 	} else {
-		return fmt.Sprintf("%s%d-%d", n.position, n.nodeIndex, n.tier1Index)
+		return fmt.Sprintf("%s%d-%d", n.position, n.nodeIndex, n.nodePlaneIndex)
 	}
 }
 
