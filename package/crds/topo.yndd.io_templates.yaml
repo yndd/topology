@@ -87,6 +87,22 @@ spec:
                 properties:
                   fabric:
                     properties:
+                      maxUplinksTier2ToTier1:
+                        default: 1
+                        description: max number of uplink per node to the next tier
+                          default should be 1 and max is 4
+                        format: int32
+                        maximum: 4
+                        minimum: 1
+                        type: integer
+                      maxUplinksTier3ToTier2:
+                        default: 1
+                        description: max number of uplink per node to the next tier
+                          default should be 1 and max is 4
+                        format: int32
+                        maximum: 4
+                        minimum: 1
+                        type: integer
                       pods:
                         items:
                           properties:
@@ -97,12 +113,17 @@ spec:
                               additionalProperties:
                                 properties:
                                   num:
-                                    description: number of nodes in the tier
+                                    description: number of nodes in the tier for superspine
+                                      it is the number of spines in a spine plane
                                     format: int32
                                     type: integer
-                                  oversubscription:
-                                    description: oversubscription ratio
-                                    type: string
+                                  uplinkPerNode:
+                                    description: number of uplink per node to the
+                                      next tier default should be 1 and max is 4
+                                    format: int32
+                                    maximum: 4
+                                    minimum: 1
+                                    type: integer
                                   vendorInfo:
                                     description: list to support multiple vendors
                                       in a tier - typically criss-cross
@@ -123,12 +144,17 @@ spec:
                         description: superspine
                         properties:
                           num:
-                            description: number of nodes in the tier
+                            description: number of nodes in the tier for superspine
+                              it is the number of spines in a spine plane
                             format: int32
                             type: integer
-                          oversubscription:
-                            description: oversubscription ratio
-                            type: string
+                          uplinkPerNode:
+                            description: number of uplink per node to the next tier
+                              default should be 1 and max is 4
+                            format: int32
+                            maximum: 4
+                            minimum: 1
+                            type: integer
                           vendorInfo:
                             description: list to support multiple vendors in a tier
                               - typically criss-cross

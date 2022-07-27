@@ -40,6 +40,18 @@ type FabricTemplate struct {
 	// superspine
 	Tier1 *FabricTemplateTier  `json:"tier1,omitempty"`
 	Pods  []*FabricTemplatePod `json:"pods,omitempty"`
+	// max number of uplink per node to the next tier
+	// default should be 1 and max is 4
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=4
+	// +kubebuilder:default=1
+	MaxUplinksTier2ToTier1 uint32 `json:"maxUplinksTier2ToTier1,omitempty"`
+	// max number of uplink per node to the next tier
+	// default should be 1 and max is 4
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=4
+	// +kubebuilder:default=1
+	MaxUplinksTier3ToTier2 uint32 `json:"maxUplinksTier3ToTier2,omitempty"`
 }
 
 type FabricTemplatePod struct {
@@ -52,9 +64,15 @@ type FabricTemplateTier struct {
 	// list to support multiple vendors in a tier - typically criss-cross
 	VendorInfo []*FabricTierVendorInfo `json:"vendorInfo,omitempty"`
 	// number of nodes in the tier
+	// for superspine it is the number of spines in a spine plane
 	NodeNumber uint32 `json:"num,omitempty"`
+	// number of uplink per node to the next tier
+	// default should be 1 and max is 4
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=4
+	UplinksPerNode uint32 `json:"uplinkPerNode,omitempty"`
 	// oversubscription ratio
-	Oversubscription string `json:"oversubscription,omitempty"`
+	//Oversubscription string `json:"oversubscription,omitempty"`
 }
 
 type FabricTierVendorInfo struct {

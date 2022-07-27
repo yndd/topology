@@ -30,30 +30,34 @@ type FabricNode interface {
 	GetNodeName() string
 	GetPosition() topov1alpha1.Position
 	GetNodeIndex() uint32
+	GetNodeTierIndex() uint32
 	GetPodIndex() uint32
 	GetInterfaceName(idx uint32) string
 	GetInterfaceNameWithPlatfromOffset(idx uint32) string
 	GetVendorType() targetv1.VendorType
 	GetPlatform() string
+	GetUplinkPerNode() uint32
 }
 
-func NewLeafFabricNode(podIndex, nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewLeafFabricNode(podIndex, nodeIndex, uplinkPerNode uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
-		log:        log,
-		position:   topov1alpha1.PositionLeaf,
-		podIndex:   podIndex,
-		nodeIndex:  nodeIndex,
-		vendorInfo: vendorInfo,
+		log:           log,
+		position:      topov1alpha1.PositionLeaf,
+		podIndex:      podIndex,
+		nodeIndex:     nodeIndex,
+		vendorInfo:    vendorInfo,
+		uplinkPerNode: uplinkPerNode,
 	}
 }
 
-func NewSpineFabricNode(podIndex, nodeIndex uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
+func NewSpineFabricNode(podIndex, nodeIndex, uplinkPerNode uint32, vendorInfo *topov1alpha1.FabricTierVendorInfo, log logging.Logger) FabricNode {
 	return &fabricNode{
-		log:        log,
-		position:   topov1alpha1.PositionSpine,
-		podIndex:   podIndex,
-		nodeIndex:  nodeIndex,
-		vendorInfo: vendorInfo,
+		log:           log,
+		position:      topov1alpha1.PositionSpine,
+		podIndex:      podIndex,
+		nodeIndex:     nodeIndex,
+		vendorInfo:    vendorInfo,
+		uplinkPerNode: uplinkPerNode,
 	}
 }
 
@@ -69,12 +73,13 @@ func NewSuperspineFabricNode(tier1Index, nodeIndex uint32, vendorInfo *topov1alp
 
 // +k8s:deepcopy-gen=false
 type fabricNode struct {
-	log        logging.Logger
-	position   topov1alpha1.Position
-	nodeIndex  uint32 // relative number within the position, pod
-	podIndex   uint32 // pod index
-	tier1Index uint32 // this is the superspine index
-	vendorInfo *topov1alpha1.FabricTierVendorInfo
+	log           logging.Logger
+	position      topov1alpha1.Position
+	nodeIndex     uint32 // relative number within the position, pod
+	podIndex      uint32 // pod index
+	tier1Index    uint32 // this is the superspine index
+	vendorInfo    *topov1alpha1.FabricTierVendorInfo
+	uplinkPerNode uint32
 }
 
 func (n *fabricNode) GetInterfaceName(idx uint32) string {
@@ -139,6 +144,10 @@ func (n *fabricNode) GetNodeIndex() uint32 {
 	return n.nodeIndex
 }
 
+func (n *fabricNode) GetNodeTierIndex() uint32 {
+	return n.tier1Index
+}
+
 func (n *fabricNode) GetPodIndex() uint32 {
 	return n.podIndex
 }
@@ -158,4 +167,11 @@ func (n *fabricNode) GetNodeName() string {
 	} else {
 		return fmt.Sprintf("%s%d-%d", n.position, n.nodeIndex, n.tier1Index)
 	}
+}
+
+func (n *fabricNode) GetUplinkPerNode() uint32 {
+	if n.uplinkPerNode == 0 {
+		return 1
+	}
+	return n.uplinkPerNode
 }

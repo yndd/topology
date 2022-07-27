@@ -6,8 +6,10 @@ metadata:
 spec:
   properties:
     fabric:
+      maxUplinksTier2ToTier1: 2
+      maxUplinksTier3ToTier2: 2
       tier1:
-        num: 1
+        num: 2
         vendorInfo:
         - vendorType: nokiaSRL
           platform: "IXR-D3"
@@ -16,11 +18,13 @@ spec:
         tiers:
           tier3:
             num: 4
+            uplinkPerNode: 1
             vendorInfo:
             - vendorType: nokiaSRL
               platform: "IXR-D3"
           tier2:
             num: 2
+            uplinkPerNode: 1
             vendorInfo:
             - vendorType: nokiaSRL
               platform: "IXR-D3"

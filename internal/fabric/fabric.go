@@ -63,11 +63,11 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 					var fabricNode FabricNode
 
 					if kind == "tier3" {
-						fabricNode = NewLeafFabricNode(podIndex, n+1, tier.VendorInfo[vendorIdx], f.log)
+						fabricNode = NewLeafFabricNode(podIndex, n+1, tier.UplinksPerNode, tier.VendorInfo[vendorIdx], f.log)
 						f.addNode(topov1alpha1.PositionLeaf, fabricNode, podIndex)
 
 					} else {
-						fabricNode = NewSpineFabricNode(podIndex, n+1, tier.VendorInfo[vendorIdx], f.log)
+						fabricNode = NewSpineFabricNode(podIndex, n+1, tier.UplinksPerNode, tier.VendorInfo[vendorIdx], f.log)
 						f.addNode(topov1alpha1.PositionSpine, fabricNode, podIndex)
 
 					}
@@ -114,22 +114,32 @@ func NewFabric(namespaceName string, template *topov1alpha1.FabricTemplate, log 
 
 	// process superspine-spine links
 	for _, tier1Node := range f.tier1Nodes {
-		//tier1NodeIndex := uint32(n) + 1
-		// we need to get all the spine in ll the pods
-		//actualTier2 := uint32(0)
 		for p, podInfo := range f.pods {
 			for m, tier2Node := range podInfo.tier2Nodes {
+
+				// validate if the uplinks per node is not greater than max uplinks
+				// otherwise there is a conflict and the algorithm behind will create
+				// overlapping indexes
+				uplinksPerNode := tier2Node.GetUplinkPerNode()
+				if uplinksPerNode > template.MaxUplinksTier2ToTier1 {
+					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, template.MaxUplinksTier2ToTier1)
+				}
+
 				// spine and superspine line up so we only create a link if there is a match
-				if uint32(m) == tier1Node.GetNodeIndex() {
-					epA := &Endpoint{
-						Node:   tier1Node,
-						IfName: tier1Node.GetInterfaceName(p),
+				// on the indexes
+				if (m + 1) == int(tier1Node.GetNodeIndex()) {
+					for u := uint32(0); u < uplinksPerNode; u++ {
+						epA := &Endpoint{
+							Node: tier1Node,
+							//IfName: tier1Node.GetInterfaceName(p + (template.MaxUplinksTier2ToTier1 * u)),
+							IfName: tier1Node.GetInterfaceName(u + 1 + ((p - 1) * template.MaxUplinksTier2ToTier1)),
+						}
+						epB := &Endpoint{
+							Node:   tier2Node,
+							IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier1Node.GetNodeTierIndex() - 1) * template.MaxUplinksTier2ToTier1)),
+						}
+						f.addLink(topov1alpha1.PositionSuperspine, NewFabricLink(epA, epB))
 					}
-					epB := &Endpoint{
-						Node:   tier2Node,
-						IfName: tier2Node.GetInterfaceNameWithPlatfromOffset(1),
-					}
-					f.addLink(topov1alpha1.PositionSuperspine, NewFabricLink(epA, epB))
 				}
 			}
 		}
