@@ -233,7 +233,10 @@ func (r *applogic) createFabric(ctx context.Context, cr *topov1alpha1.Definition
 	log := r.log.WithValues("crName", crName)
 	log.Debug("createFabric...")
 
-	f, err := fabric.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric, r.log)
+	f, err := fabric.NewFabric(tmpl.GetNamespacedName(), tmpl.Spec.Properties.Fabric,
+		fabric.WithLogger(r.log),
+		fabric.WithClient(r.client),
+	)
 	if err != nil {
 		return err
 	}

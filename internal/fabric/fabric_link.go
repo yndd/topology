@@ -31,7 +31,7 @@ type FabricLink interface {
 
 func NewFabricLink(epA *Endpoint, epB *Endpoint) FabricLink {
 	linkName := fmt.Sprintf("%s-%s-%s-%s", epA.Node.GetNodeName(), epA.IfName, epB.Node.GetNodeName(), epB.IfName)
-	
+
 	return &fabricLink{
 		name: linkName,
 		epA:  epA,

@@ -87,6 +87,32 @@ spec:
                 properties:
                   fabric:
                     properties:
+                      borderLeaf:
+                        properties:
+                          num:
+                            description: number of nodes in the tier for superspine
+                              it is the number of spines in a spine plane
+                            format: int32
+                            type: integer
+                          uplinkPerNode:
+                            description: number of uplink per node to the next tier
+                              default should be 1 and max is 4
+                            format: int32
+                            maximum: 4
+                            minimum: 1
+                            type: integer
+                          vendorInfo:
+                            description: list to support multiple vendors in a tier
+                              - typically criss-cross
+                            items:
+                              properties:
+                                platform:
+                                  type: string
+                                vendorType:
+                                  type: string
+                              type: object
+                            type: array
+                        type: object
                       maxUplinksTier2ToTier1:
                         default: 1
                         description: max number of uplink per node to the next tier
@@ -103,40 +129,80 @@ spec:
                         maximum: 4
                         minimum: 1
                         type: integer
-                      pods:
+                      pod:
                         items:
                           properties:
+                            definitionRef:
+                              description: definition reference to a template that
+                                defines the pod definition
+                              type: string
                             num:
+                              description: number of pods defined based on this template
+                                no default since templates should not define the pod
+                                number default should be 1 and max is 16
                               format: int32
+                              maximum: 16
+                              minimum: 1
                               type: integer
-                            tiers:
-                              additionalProperties:
-                                properties:
-                                  num:
-                                    description: number of nodes in the tier for superspine
-                                      it is the number of spines in a spine plane
-                                    format: int32
-                                    type: integer
-                                  uplinkPerNode:
-                                    description: number of uplink per node to the
-                                      next tier default should be 1 and max is 4
-                                    format: int32
-                                    maximum: 4
-                                    minimum: 1
-                                    type: integer
-                                  vendorInfo:
-                                    description: list to support multiple vendors
-                                      in a tier - typically criss-cross
-                                    items:
-                                      properties:
-                                        platform:
-                                          type: string
-                                        vendorType:
-                                          type: string
-                                      type: object
-                                    type: array
-                                type: object
-                              description: tier3, tier2
+                            templateRef:
+                              description: template reference to a template that defines
+                                the pod definition
+                              type: string
+                            tier2:
+                              description: Tier2 template, that defines the spine
+                                parameters in the pod definition
+                              properties:
+                                num:
+                                  description: number of nodes in the tier for superspine
+                                    it is the number of spines in a spine plane
+                                  format: int32
+                                  type: integer
+                                uplinkPerNode:
+                                  description: number of uplink per node to the next
+                                    tier default should be 1 and max is 4
+                                  format: int32
+                                  maximum: 4
+                                  minimum: 1
+                                  type: integer
+                                vendorInfo:
+                                  description: list to support multiple vendors in
+                                    a tier - typically criss-cross
+                                  items:
+                                    properties:
+                                      platform:
+                                        type: string
+                                      vendorType:
+                                        type: string
+                                    type: object
+                                  type: array
+                              type: object
+                            tier3:
+                              description: Tier3 template, that defines the leaf parameters
+                                in the pod definition
+                              properties:
+                                num:
+                                  description: number of nodes in the tier for superspine
+                                    it is the number of spines in a spine plane
+                                  format: int32
+                                  type: integer
+                                uplinkPerNode:
+                                  description: number of uplink per node to the next
+                                    tier default should be 1 and max is 4
+                                  format: int32
+                                  maximum: 4
+                                  minimum: 1
+                                  type: integer
+                                vendorInfo:
+                                  description: list to support multiple vendors in
+                                    a tier - typically criss-cross
+                                  items:
+                                    properties:
+                                      platform:
+                                        type: string
+                                      vendorType:
+                                        type: string
+                                    type: object
+                                  type: array
                               type: object
                           type: object
                         type: array

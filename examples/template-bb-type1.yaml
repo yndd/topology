@@ -1,0 +1,18 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Template
+metadata:
+  name: backbone-tmpl1
+  namespace: ndd-system
+spec:
+  properties:
+    fabric:
+      maxUplinksTier2ToTier1: 2
+      maxUplinksTier3ToTier2: 2
+      tier1:
+        num: 2
+        vendorInfo:
+        - vendorType: nokiaSRL
+          platform: "IXR-D3"
+      pod:
+      - templateRef: ndd-system/pod-type1
+      - templateRef: ndd-system/pod-type1

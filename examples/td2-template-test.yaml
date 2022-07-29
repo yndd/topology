@@ -1,0 +1,55 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Template
+metadata:
+  name: tmpl1
+  namespace: ndd-system
+spec:
+  properties:
+    fabric:
+      maxUplinksTier2ToTier1: 2
+      maxUplinksTier3ToTier2: 2
+      tier1:
+        num: 2
+        vendorInfo:
+        - vendorType: nokiaSRL
+          platform: "IXR-D3"
+      pods:
+      - definition-reference: definitionPodx # num pods must be 1, must not have a tier1 -> adding links to existing nodes
+      - definition-reference: definitionPodx # num pods must be 1, must not have a tier1 -> adding links to existing nodes
+
+apiVersion: topo.yndd.io/v1alpha1
+kind: Template
+metadata:
+  name: tmpl1
+  namespace: ndd-system
+spec:
+  properties:
+    fabric:
+      maxUplinksTier2ToTier1: 2
+      maxUplinksTier3ToTier2: 2
+      tier1:
+        num: 2
+        vendorInfo:
+        - vendorType: nokiaSRL
+          platform: "IXR-D3"
+      pods:
+      ## we should not allow mixing explicit pod definitions and references
+      - num: 4 # num pods should be ignored if mixing is in use
+        tier3:
+          num: 4
+          uplinkPerNode: 1
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"
+        tier2:
+          num: 2
+          uplinkPerNode: 1
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"
+      - template-reference: definitionPody # num pods must be 1, must not have a tier1, must not have another template
+      - template-reference: definitionPodx # num pods must be 1, must not have a tier1, must not have another template
+      - template-reference: definitionPodx # num pods must be 1, must not have a tier1, must not have another template
+      - template-reference: definitionPodx # num pods must be 1, must not have a tier1, must not have another template
+      - template-reference: definitionPodx # num pods must be 1, must not have a tier1, must not have another template
+      - template-reference: definitionPodx # num pods must be 1, must not have a tier1, must not have another template

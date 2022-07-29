@@ -38,8 +38,9 @@ type TemplateSubnet struct {
 
 type FabricTemplate struct {
 	// superspine
-	Tier1 *FabricTemplateTier  `json:"tier1,omitempty"`
-	Pods  []*FabricTemplatePod `json:"pods,omitempty"`
+	Tier1      *TierTemplate  `json:"tier1,omitempty"`
+	BorderLeaf *TierTemplate  `json:"borderLeaf,omitempty"`
+	Pod        []*PodTemplate `json:"pod,omitempty"`
 	// max number of uplink per node to the next tier
 	// default should be 1 and max is 4
 	// +kubebuilder:validation:Minimum=1
@@ -54,18 +55,24 @@ type FabricTemplate struct {
 	MaxUplinksTier3ToTier2 uint32 `json:"maxUplinksTier3ToTier2,omitempty"`
 }
 
-type FabricTemplatePod struct {
+type PodTemplate struct {
 	// number of pods defined based on this template
-	PodNumber uint32 `json:"num,omitempty"`
+	// no default since templates should not define the pod number
+	// default should be 1 and max is 16
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=16
+	PodNumber *uint32 `json:"num,omitempty"`
 	// Tier2 template, that defines the spine parameters in the pod definition
-	Tier2 *FabricTemplateTier  `json:"tier2,omitempty"`
+	Tier2 *TierTemplate `json:"tier2,omitempty"`
 	// Tier3 template, that defines the leaf parameters in the pod definition
-	Tier3 *FabricTemplateTier  `json:"tier3,omitempty"`
-	// pod reference to a template that defines the pod definition
-	PodTemplateReference string `json:"podRef,omitempty"`
+	Tier3 *TierTemplate `json:"tier3,omitempty"`
+	// template reference to a template that defines the pod definition
+	TemplateReference *string `json:"templateRef,omitempty"`
+	// definition reference to a template that defines the pod definition
+	DefinitionReference *string `json:"definitionRef,omitempty"`
 }
 
-type FabricTemplateTier struct {
+type TierTemplate struct {
 	// list to support multiple vendors in a tier - typically criss-cross
 	VendorInfo []*FabricTierVendorInfo `json:"vendorInfo,omitempty"`
 	// number of nodes in the tier
@@ -76,8 +83,6 @@ type FabricTemplateTier struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=4
 	UplinksPerNode uint32 `json:"uplinkPerNode,omitempty"`
-	// oversubscription ratio
-	//Oversubscription string `json:"oversubscription,omitempty"`
 }
 
 type FabricTierVendorInfo struct {

@@ -1,0 +1,9 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Definition
+metadata:
+  name: nokia.region1.fabric3
+  namespace: ndd-system
+spec:
+  properties:
+    templates:
+    - namespacedName: ndd-system/backbone-tmpl1

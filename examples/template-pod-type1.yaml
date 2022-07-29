@@ -1,0 +1,22 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Template
+metadata:
+  name: pod-type1
+  namespace: ndd-system
+spec:
+  properties:
+    fabric:
+      pod:
+      - tier2:
+          num: 2
+          uplinkPerNode: 4
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"
+        tier3:
+          num: 4
+          uplinkPerNode: 2
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"
+        
